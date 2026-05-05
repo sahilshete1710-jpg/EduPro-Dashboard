@@ -4,3 +4,4 @@ seaborn
 streamlit
 openpyxl
 plotly
+bcrypt
