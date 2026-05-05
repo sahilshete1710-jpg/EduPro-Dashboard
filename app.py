@@ -5,18 +5,11 @@ from database import *
 
 create_tables()
 
-st.set_page_config(page_title="EduPro ERP + Analytics", layout="wide")
-if st.session_state.logged_in:
-    
-    st.sidebar.title("🎓 EduPro ERP")
-
-    module = st.sidebar.radio(
-        "Navigation",
-        ["Dashboard", "Analytics", "Students", "Attendance", "Marks"]
-    )
-# ---------------- SESSION ----------------
+# ---------------- SESSION INIT ----------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
+
+st.set_page_config(page_title="EduPro ERP + Analytics", layout="wide")
 
 # ---------------- LOGIN / SIGNUP ----------------
 menu = ["Login", "Signup"]
@@ -51,6 +44,7 @@ if not st.session_state.logged_in:
         if st.button("Create Account"):
             add_user(user, pwd, role)
             st.success("Account Created")
+
 # ---------------- MAIN SYSTEM ----------------
 if st.session_state.logged_in:
 
@@ -82,65 +76,66 @@ if st.session_state.logged_in:
     elif module == "Analytics":
         st.title("📊 Analytics")
 
-        fig = px.scatter(df, x="YearsOfExperience", y="TeacherRating",
-                         color="Expertise", template="plotly_dark")
+        fig = px.scatter(
+            df,
+            x="YearsOfExperience",
+            y="TeacherRating",
+            color="Expertise",
+            template="plotly_dark"
+        )
         st.plotly_chart(fig, use_container_width=True)
 
-    
     # ---------------- STUDENTS ----------------
-elif module == "Students":
-    st.title("👨‍🎓 Students")
+    elif module == "Students":
+        st.title("👨‍🎓 Students")
 
-    users_df = pd.read_excel("EduPro Online Platform.xlsx", sheet_name="Users")
+        users_df = pd.read_excel("EduPro Online Platform.xlsx", sheet_name="Users")
 
-    if st.button("Import Users"):
-        try:
-            add_student_bulk(users_df)
-            st.success("Imported!")
-        except Exception as e:
-            st.warning("Students may already exist")
+        if st.button("Import Users"):
+            try:
+                add_student_bulk(users_df)
+                st.success("Imported!")
+            except:
+                st.warning("Students may already exist")
 
-    data = view_students()
-    student_df = pd.DataFrame(data, columns=["ID", "Name", "Class", "Age"])
-    st.dataframe(student_df)
-
+        data = view_students()
+        st.dataframe(pd.DataFrame(data, columns=["ID", "Name", "Class", "Age"]))
 
     # ---------------- ATTENDANCE ----------------
-elif module == "Attendance":
-    st.title("📅 Attendance")
+    elif module == "Attendance":
+        st.title("📅 Attendance")
 
-    students = view_students()
-    student_df = pd.DataFrame(students, columns=["ID", "Name", "Class", "Age"])
+        students = view_students()
+        student_df = pd.DataFrame(students, columns=["ID", "Name", "Class", "Age"])
 
-    name_to_id = {row["Name"]: row["ID"] for _, row in student_df.iterrows()}
-
-    if len(name_to_id) == 0:
-        st.warning("No students found. Import students first.")
-    else:
-        selected = st.selectbox("Student", list(name_to_id.keys()))
-        status = st.selectbox("Status", ["Present", "Absent"])
-        date = st.date_input("Select Date")
-
-        if st.button("Save"):
-            add_attendance(name_to_id[selected], str(date), status)
-            st.success("Saved")
-
-    st.subheader("📋 Attendance Records")
-    st.dataframe(pd.DataFrame(view_attendance(),
-                             columns=["Student", "Date", "Status"]))
-    
-    # ---------------- MARKS ----------------
-elif module == "Marks":
-    st.title("📊 Marks")
-    
-    students = view_students()
-    student_df = pd.DataFrame(students, columns=["ID", "Name", "Class", "Age"])
-
-    name_to_id = {row["Name"]: row["ID"] for _, row in student_df.iterrows()}
-
-    if len(name_to_id) == 0:
+        if student_df.empty:
             st.warning("No students found. Import students first.")
-    else:
+        else:
+            name_to_id = dict(zip(student_df["Name"], student_df["ID"]))
+
+            selected = st.selectbox("Student", list(name_to_id.keys()))
+            status = st.selectbox("Status", ["Present", "Absent"])
+            date = st.date_input("Date")
+
+            if st.button("Save"):
+                add_attendance(name_to_id[selected], str(date), status)
+                st.success("Saved")
+
+        st.dataframe(pd.DataFrame(view_attendance(),
+                                 columns=["Student", "Date", "Status"]))
+
+    # ---------------- MARKS ----------------
+    elif module == "Marks":
+        st.title("📊 Marks")
+
+        students = view_students()
+        student_df = pd.DataFrame(students, columns=["ID", "Name", "Class", "Age"])
+
+        if student_df.empty:
+            st.warning("No students found. Import students first.")
+        else:
+            name_to_id = dict(zip(student_df["Name"], student_df["ID"]))
+
             selected = st.selectbox("Student", list(name_to_id.keys()))
             subject = st.text_input("Subject")
             marks = st.slider("Marks", 0, 100)
@@ -149,5 +144,5 @@ elif module == "Marks":
                 add_marks(name_to_id[selected], subject, marks)
                 st.success("Saved")
 
-    st.dataframe(pd.DataFrame(view_marks(),
+        st.dataframe(pd.DataFrame(view_marks(),
                                  columns=["Student", "Subject", "Marks"]))
