@@ -1,148 +1,135 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-from database import *
+import sqlite3
+import bcrypt
 
-create_tables()
+def connect_db():
+    return sqlite3.connect("erp.db", check_same_thread=False)
 
-# ---------------- SESSION INIT ----------------
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
+def create_tables():
+    conn = connect_db()
+    c = conn.cursor()
 
-st.set_page_config(page_title="EduPro ERP + Analytics", layout="wide")
-
-# ---------------- LOGIN / SIGNUP ----------------
-menu = ["Login", "Signup"]
-choice = st.sidebar.selectbox("Menu", menu)
-
-if not st.session_state.logged_in:
-
-    if choice == "Login":
-        st.title("🔐 Login")
-
-        user = st.text_input("Username")
-        pwd = st.text_input("Password", type="password")
-
-        if st.button("Login"):
-            result = login_user(user, pwd)
-            if result:
-                st.session_state.logged_in = True
-                st.session_state.user = result[0]
-                st.session_state.role = result[2]
-                st.success("Login Successful")
-                st.rerun()
-            else:
-                st.error("Invalid credentials")
-
-    elif choice == "Signup":
-        st.title("📝 Signup")
-
-        user = st.text_input("Username")
-        pwd = st.text_input("Password", type="password")
-        role = st.selectbox("Role", ["Student", "Admin", "Teacher"])
-
-        if st.button("Create Account"):
-            add_user(user, pwd, role)
-            st.success("Account Created")
-
-# ---------------- MAIN SYSTEM ----------------
-if st.session_state.logged_in:
-
-    st.sidebar.title("🎓 EduPro ERP")
-    st.sidebar.write(f"User: {st.session_state.user}")
-    st.sidebar.write(f"Role: {st.session_state.role}")
-
-    module = st.sidebar.radio(
-        "Navigation",
-        ["Dashboard", "Analytics", "Students", "Attendance", "Marks"]
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS users(
+        username TEXT PRIMARY KEY,
+        password BLOB,
+        role TEXT
     )
+    """)
 
-    if st.sidebar.button("Logout"):
-        st.session_state.logged_in = False
-        st.rerun()
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS students(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        class TEXT,
+        age INTEGER
+    )
+    """)
 
-    df = pd.read_csv("final_dataset.csv")
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS attendance(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER,
+        date TEXT,
+        status TEXT
+    )
+    """)
 
-    # ---------------- DASHBOARD ----------------
-    if module == "Dashboard":
-        st.title("🏠 Dashboard")
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS marks(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER,
+        subject TEXT,
+        marks INTEGER
+    )
+    """)
 
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Courses", df["CourseID"].nunique())
-        col2.metric("Teachers", df["TeacherID"].nunique())
-        col3.metric("Enrollments", len(df))
+    conn.commit()
+    conn.close()
 
-    # ---------------- ANALYTICS ----------------
-    elif module == "Analytics":
-        st.title("📊 Analytics")
+# ---------------- USERS ----------------
+def add_user(username, password, role):
+    conn = connect_db()
+    c = conn.cursor()
+    hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+    c.execute("INSERT INTO users VALUES (?, ?, ?)", (username, hashed, role))
+    conn.commit()
+    conn.close()
 
-        fig = px.scatter(
-            df,
-            x="YearsOfExperience",
-            y="TeacherRating",
-            color="Expertise",
-            template="plotly_dark"
+def login_user(username, password):
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE username=?", (username,))
+    data = c.fetchone()
+    conn.close()
+
+    if data and bcrypt.checkpw(password.encode(), data[1]):
+        return data
+    return None
+
+# ---------------- STUDENTS ----------------
+def add_student_bulk(df):
+    conn = connect_db()
+    c = conn.cursor()
+
+    for _, row in df.iterrows():
+        c.execute(
+            "INSERT INTO students(name, class, age) VALUES (?, ?, ?)",
+            (row["UserName"], "Default", 18)
         )
-        st.plotly_chart(fig, use_container_width=True)
 
-    # ---------------- STUDENTS ----------------
-    elif module == "Students":
-        st.title("👨‍🎓 Students")
+    conn.commit()
+    conn.close()
 
-        users_df = pd.read_excel("EduPro Online Platform.xlsx", sheet_name="Users")
+def view_students():
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM students")
+    data = c.fetchall()
+    conn.close()
+    return data
 
-        if st.button("Import Users"):
-            try:
-                add_student_bulk(users_df)
-                st.success("Imported!")
-            except:
-                st.warning("Students may already exist")
+# ---------------- ATTENDANCE ----------------
+def add_attendance(student_id, date, status):
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute(
+        "INSERT INTO attendance(student_id, date, status) VALUES (?, ?, ?)",
+        (student_id, date, status)
+    )
+    conn.commit()
+    conn.close()
 
-        data = view_students()
-        st.dataframe(pd.DataFrame(data, columns=["ID", "Name", "Class", "Age"]))
+def view_attendance():
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT s.name, a.date, a.status
+        FROM attendance a
+        JOIN students s ON a.student_id = s.id
+    """)
+    data = c.fetchall()
+    conn.close()
+    return data
 
-    # ---------------- ATTENDANCE ----------------
-    elif module == "Attendance":
-        st.title("📅 Attendance")
+# ---------------- MARKS ----------------
+def add_marks(student_id, subject, marks):
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute(
+        "INSERT INTO marks(student_id, subject, marks) VALUES (?, ?, ?)",
+        (student_id, subject, marks)
+    )
+    conn.commit()
+    conn.close()
 
-        students = view_students()
-        student_df = pd.DataFrame(students, columns=["ID", "Name", "Class", "Age"])
-
-        if student_df.empty:
-            st.warning("No students found. Import students first.")
-        else:
-            name_to_id = dict(zip(student_df["Name"], student_df["ID"]))
-
-            selected = st.selectbox("Student", list(name_to_id.keys()))
-            status = st.selectbox("Status", ["Present", "Absent"])
-            date = st.date_input("Date")
-
-            if st.button("Save"):
-                add_attendance(name_to_id[selected], str(date), status)
-                st.success("Saved")
-
-        st.dataframe(pd.DataFrame(view_attendance(),
-                                 columns=["Student", "Date", "Status"]))
-
-    # ---------------- MARKS ----------------
-    elif module == "Marks":
-        st.title("📊 Marks")
-
-        students = view_students()
-        student_df = pd.DataFrame(students, columns=["ID", "Name", "Class", "Age"])
-
-        if student_df.empty:
-            st.warning("No students found. Import students first.")
-        else:
-            name_to_id = dict(zip(student_df["Name"], student_df["ID"]))
-
-            selected = st.selectbox("Student", list(name_to_id.keys()))
-            subject = st.text_input("Subject")
-            marks = st.slider("Marks", 0, 100)
-
-            if st.button("Save"):
-                add_marks(name_to_id[selected], subject, marks)
-                st.success("Saved")
-
-        st.dataframe(pd.DataFrame(view_marks(),
-                                 columns=["Student", "Subject", "Marks"]))
+def view_marks():
+    conn = connect_db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT s.name, m.subject, m.marks
+        FROM marks m
+        JOIN students s ON m.student_id = s.id
+    """)
+    data = c.fetchall()
+    conn.close()
+    return data
