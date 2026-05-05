@@ -1,8 +1,12 @@
 import sqlite3
 import bcrypt
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "erp.db")
 
 def connect_db():
-    return sqlite3.connect("erp.db", check_same_thread=False)
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
 
 def create_tables():
     conn = connect_db()

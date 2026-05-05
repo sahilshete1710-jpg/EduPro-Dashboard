@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from database import *
+import os
+st.write("DB Path:", os.path.abspath("erp.db"))
 
 create_tables()
 
