@@ -55,9 +55,9 @@ if st.session_state.logged_in:
     st.sidebar.write(f"Role: {st.session_state.role}")
 
     module = st.sidebar.radio(
-        "Navigation",
-        ["Dashboard", "Analytics", "Students", "Attendance", "Marks"]
-    )
+    "Navigation",
+    ["Dashboard", "Analytics", "Students", "Attendance", "Marks", "Report Card"]
+)
 
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
@@ -148,3 +148,36 @@ if st.session_state.logged_in:
 
         st.dataframe(pd.DataFrame(view_marks(),
                                  columns=["Student", "Subject", "Marks"]))
+                                 # ---------------- REPORT CARD ----------------
+elif module == "Report Card":
+    st.title("📄 Student Report Card")
+
+    students = view_students()
+    student_df = pd.DataFrame(students, columns=["ID", "Name", "Class", "Age"])
+
+    if student_df.empty:
+        st.warning("No students available")
+    else:
+        name_to_id = dict(zip(student_df["Name"], student_df["ID"]))
+
+        selected = st.selectbox("Select Student", list(name_to_id.keys()))
+        student_id = name_to_id[selected]
+
+        attendance_pct, avg_marks, marks_data = get_student_report(student_id)
+
+        # KPI Cards
+        col1, col2 = st.columns(2)
+        col1.metric("Attendance %", f"{attendance_pct:.2f}%")
+        col2.metric("Average Marks", f"{avg_marks:.2f}")
+
+        # Marks Table
+        st.subheader("📊 Subject-wise Marks")
+        if marks_data:
+            st.dataframe(pd.DataFrame(marks_data, columns=["Subject", "Marks"]))
+        else:
+            st.info("No marks available")
+
+        # Chart
+        if marks_data:
+            df_marks = pd.DataFrame(marks_data, columns=["Subject", "Marks"])
+            st.bar_chart(df_marks.set_index("Subject"))

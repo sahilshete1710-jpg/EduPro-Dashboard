@@ -137,3 +137,38 @@ def view_marks():
     data = c.fetchall()
     conn.close()
     return data
+    # ---------------- REPORT CARD ----------------
+def get_student_report(student_id):
+    conn = connect_db()
+    c = conn.cursor()
+
+    # Attendance %
+    c.execute("""
+        SELECT COUNT(*) FROM attendance
+        WHERE student_id=? AND status='Present'
+    """, (student_id,))
+    present = c.fetchone()[0]
+
+    c.execute("""
+        SELECT COUNT(*) FROM attendance
+        WHERE student_id=?
+    """, (student_id,))
+    total = c.fetchone()[0]
+
+    attendance_pct = (present / total * 100) if total > 0 else 0
+
+    # Marks
+    c.execute("""
+        SELECT subject, marks FROM marks
+        WHERE student_id=?
+    """, (student_id,))
+    marks_data = c.fetchall()
+
+    avg_marks = (
+        sum([m[1] for m in marks_data]) / len(marks_data)
+        if marks_data else 0
+    )
+
+    conn.close()
+
+    return attendance_pct, avg_marks, marks_data
