@@ -1,83 +1,126 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from database import *
 
-st.set_page_config(page_title="EduPro Dashboard", layout="wide")
+create_tables()
 
-# -----------------------
-# FAKE USER DATABASE
-# -----------------------
-users = {
-    "admin": {"password": "admin123", "role": "Admin"},
-    "student": {"password": "student123", "role": "Student"}
-}
+st.set_page_config(page_title="EduPro ERP + Analytics", layout="wide")
 
-# -----------------------
-# SESSION STATE
-# -----------------------
+# ---------------- SESSION ----------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# -----------------------
-# LOGIN FUNCTION
-# -----------------------
-def login():
-    st.title("🔐 EduPro Login Portal")
+# ---------------- LOGIN ----------------
+menu = ["Login", "Signup"]
+choice = st.sidebar.selectbox("Menu", menu)
 
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+if not st.session_state.logged_in:
 
-    if st.button("Login"):
-        if username in users and users[username]["password"] == password:
-            st.session_state.logged_in = True
-            st.session_state.user = username
-            st.session_state.role = users[username]["role"]
-            st.success("Login Successful!")
-            st.rerun()
-        else:
-            st.error("Invalid username or password")
+    if choice == "Login":
+        st.title("🔐 EduPro Login")
 
-# -----------------------
-# DASHBOARD FUNCTION
-# -----------------------
-def dashboard():
-    df = pd.read_csv("final_dataset.csv")
+        user = st.text_input("Username")
+        pwd = st.text_input("Password", type="password")
 
-    st.sidebar.title("👤 User Panel")
-    st.sidebar.write(f"Logged in as: **{st.session_state.user}**")
-    st.sidebar.write(f"Role: **{st.session_state.role}**")
+        if st.button("Login"):
+            result = login_user(user, pwd)
+            if result:
+                st.session_state.logged_in = True
+                st.session_state.user = result[0]
+                st.session_state.role = result[2]
+                st.success("Login Successful")
+                st.rerun()
+            else:
+                st.error("Invalid credentials")
+
+    elif choice == "Signup":
+        st.title("📝 Signup")
+
+        user = st.text_input("Username")
+        pwd = st.text_input("Password", type="password")
+        role = st.selectbox("Role", ["Student", "Admin", "Teacher"])
+
+        if st.button("Create Account"):
+            add_user(user, pwd, role)
+            st.success("Account Created")
+
+# ---------------- MAIN SYSTEM ----------------
+if st.session_state.logged_in:
+
+    st.sidebar.title("🎓 EduPro System")
+    st.sidebar.write(f"👤 {st.session_state.user}")
+    st.sidebar.write(f"Role: {st.session_state.role}")
+
+    module = st.sidebar.radio(
+        "Navigation",
+        ["Dashboard", "Analytics", "Attendance", "Marks"]
+    )
 
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.rerun()
 
-    st.title("🎓 EduPro Premium Dashboard")
+    df = pd.read_csv("final_dataset.csv")
 
-    # Filters
-    expertise = st.sidebar.multiselect("Expertise", df["Expertise"].unique(), default=df["Expertise"].unique())
+    # ---------------- DASHBOARD ----------------
+    if module == "Dashboard":
+        st.title("🏠 Dashboard")
 
-    filtered_df = df[df["Expertise"].isin(expertise)]
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Total Courses", df["CourseID"].nunique())
+        col2.metric("Total Teachers", df["TeacherID"].nunique())
+        col3.metric("Total Enrollments", len(df))
 
-    # KPI
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Avg Teacher Rating", round(filtered_df["TeacherRating"].mean(), 2))
-    col2.metric("Avg Course Rating", round(filtered_df["CourseRating"].mean(), 2))
-    col3.metric("Enrollments", len(filtered_df))
+    # ---------------- ANALYTICS ----------------
+    elif module == "Analytics":
+        st.title("📊 EduPro Analytics")
 
-    # Chart
-    fig = px.scatter(filtered_df, x="YearsOfExperience", y="TeacherRating",
-                     color="Expertise", template="plotly_dark")
-    st.plotly_chart(fig, use_container_width=True)
+        fig1 = px.scatter(
+            df,
+            x="YearsOfExperience",
+            y="TeacherRating",
+            color="Expertise",
+            template="plotly_dark"
+        )
+        st.plotly_chart(fig1, use_container_width=True)
 
-    # Role-based content
-    if st.session_state.role == "Admin":
-        st.subheader("🔧 Admin Controls")
-        st.write("You can manage instructors and courses here.")
+        pivot = df.pivot_table(
+            values="CourseRating",
+            index="CourseCategory",
+            columns="CourseLevel"
+        )
 
-# -----------------------
-# MAIN APP
-# -----------------------
-if not st.session_state.logged_in:
-    login()
-else:
-    dashboard()
+        fig2 = px.imshow(pivot, text_auto=True, template="plotly_dark")
+        st.plotly_chart(fig2, use_container_width=True)
+
+    # ---------------- ATTENDANCE ----------------
+    elif module == "Attendance":
+        st.title("📅 Attendance")
+
+        student = st.text_input("Student Name")
+        status = st.selectbox("Status", ["Present", "Absent"])
+
+        if st.button("Save Attendance"):
+            add_attendance(student, "2026-01-01", status)
+            st.success("Saved!")
+
+        st.subheader("Records")
+        data = view_attendance()
+        st.write(pd.DataFrame(data, columns=["Student", "Date", "Status"]))
+
+    # ---------------- MARKS ----------------
+    elif module == "Marks":
+        st.title("📊 Marks")
+
+        student = st.text_input("Student")
+        subject = st.text_input("Subject")
+        marks = st.slider("Marks", 0, 100)
+
+        if st.button("Save Marks"):
+            add_marks(student, subject, marks)
+            st.success("Saved!")
+
+        st.subheader("Records")
+        data = view_marks()
+        st.write(pd.DataFrame(data, columns=["Student", "Subject", "Marks"]))
