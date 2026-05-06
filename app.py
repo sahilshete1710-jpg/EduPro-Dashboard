@@ -210,48 +210,50 @@ if st.session_state.logged_in:
         )
 
     # =====================================================
-    # STUDENTS
-    # =====================================================
-    elif module == "Students":
+# STUDENTS
+# =====================================================
+elif module == "Students":
 
-        st.title("👨‍🎓 Students")
+    st.title("👨‍🎓 Students")
 
-        users_df = pd.read_excel(
-            "EduPro Online Platform.xlsx",
-            sheet_name="Users"
-        )
+    users_df = pd.read_excel(
+        "EduPro Online Platform.xlsx",
+        sheet_name="Users"
+    )
 
-        if st.button("Import Users"):
+    # SHOW COLUMN NAMES
+    st.write(users_df.columns)
 
-            try:
+    if st.button("Import Users"):
 
-                add_student_bulk(users_df)
+        try:
 
-                st.success(
-                    "Students Imported"
-                )
+            add_student_bulk(users_df)
 
-            except Exception as e:
+            st.success(
+                "Students Imported"
+            )
 
-                st.error(f"Error: {e}")
+        except Exception as e:
 
-        data = view_students()
+            st.error(f"Error: {e}")
 
-        student_df = pd.DataFrame(
-            data,
-            columns=[
-                "ID",
-                "Name",
-                "Class",
-                "Age"
-            ]
-        )
+    data = view_students()
 
-        st.dataframe(
-            student_df,
-            use_container_width=True
-        )
+    student_df = pd.DataFrame(
+        data,
+        columns=[
+            "ID",
+            "Name",
+            "Class",
+            "Age"
+        ]
+    )
 
+    st.dataframe(
+        student_df,
+        use_container_width=True
+    )
     # =====================================================
     # TEACHERS
     # =====================================================
