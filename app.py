@@ -43,9 +43,7 @@ choice = st.sidebar.selectbox(
 # =========================================================
 if not st.session_state.logged_in:
 
-    # =====================================================
     # LOGIN
-    # =====================================================
     if choice == "Login":
 
         st.title("🔐 Login")
@@ -75,9 +73,7 @@ if not st.session_state.logged_in:
 
                 st.error("Invalid credentials")
 
-    # =====================================================
     # SIGNUP
-    # =====================================================
     elif choice == "Signup":
 
         st.title("📝 Signup")
@@ -117,9 +113,7 @@ if not st.session_state.logged_in:
 # =========================================================
 else:
 
-    # =====================================================
     # SIDEBAR
-    # =====================================================
     st.sidebar.title("🎓 EduPro ERP")
 
     st.sidebar.write(
@@ -130,9 +124,7 @@ else:
         f"Role: {st.session_state.role}"
     )
 
-    # =====================================================
     # ROLE BASED MENU
-    # =====================================================
     if st.session_state.role == "Admin":
 
         modules = [
@@ -161,18 +153,14 @@ else:
         modules
     )
 
-    # =====================================================
     # LOGOUT
-    # =====================================================
     if st.sidebar.button("Logout"):
 
         st.session_state.logged_in = False
 
         st.rerun()
 
-    # =====================================================
     # LOAD DATASET
-    # =====================================================
     df = pd.read_csv("final_dataset.csv")
 
     # =====================================================
@@ -281,9 +269,6 @@ else:
 
         else:
 
-            # =================================================
-            # IMPORT TEACHERS
-            # =================================================
             st.subheader("📥 Import Teachers")
 
             if st.button(
@@ -309,9 +294,6 @@ else:
 
                     st.error(f"Error: {e}")
 
-            # =================================================
-            # ADD TEACHER
-            # =================================================
             st.subheader("➕ Add Teacher")
 
             teacher_id = st.number_input(
@@ -367,9 +349,6 @@ else:
                     "Teacher Added Successfully"
                 )
 
-            # =================================================
-            # VIEW TEACHERS
-            # =================================================
             st.subheader("📋 Teacher Records")
 
             teacher_data = view_teachers()

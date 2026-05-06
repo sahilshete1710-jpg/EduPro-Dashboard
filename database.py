@@ -113,12 +113,10 @@ def login_user(username, password):
 # =========================================================
 def add_student_bulk(df):
 
-    # PRINT COLUMN NAMES
     print("Excel Columns:", df.columns)
 
     for _, row in df.iterrows():
 
-        # TAKE FIRST COLUMN AS STUDENT NAME
         student_name = str(row.iloc[0])
 
         c.execute(
@@ -211,7 +209,6 @@ def view_marks():
 # =========================================================
 def get_student_report(student_id):
 
-    # TOTAL ATTENDANCE
     c.execute(
         '''
         SELECT COUNT(*)
@@ -223,7 +220,6 @@ def get_student_report(student_id):
 
     total = c.fetchone()[0]
 
-    # PRESENT ATTENDANCE
     c.execute(
         '''
         SELECT COUNT(*)
@@ -240,7 +236,6 @@ def get_student_report(student_id):
         if total > 0 else 0
     )
 
-    # AVERAGE MARKS
     c.execute(
         '''
         SELECT AVG(marks)
@@ -255,7 +250,6 @@ def get_student_report(student_id):
     if avg_marks is None:
         avg_marks = 0
 
-    # SUBJECT MARKS
     c.execute(
         '''
         SELECT subject, marks
