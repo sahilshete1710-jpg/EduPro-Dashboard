@@ -17,7 +17,9 @@ st.set_page_config(
 # =========================================================
 create_tables()
 
+# =========================================================
 # DEFAULT USERS
+# =========================================================
 try:
     add_user("admin", "admin123", "Admin")
 except:
@@ -35,7 +37,7 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 # =========================================================
-# LOGIN / SIGNUP
+# LOGIN / SIGNUP MENU
 # =========================================================
 menu = ["Login", "Signup"]
 
@@ -179,7 +181,14 @@ else:
     # =====================================================
     # LOAD DATASET
     # =====================================================
-    df = pd.read_csv("final_dataset.csv")
+    if os.path.exists("final_dataset.csv"):
+
+        df = pd.read_csv("final_dataset.csv")
+
+    else:
+
+        st.error("final_dataset.csv file not found")
+        st.stop()
 
     # =====================================================
     # DASHBOARD
@@ -233,25 +242,37 @@ else:
 
         st.title("👨‍🎓 Students")
 
-        users_df = pd.read_excel(
-            "edupro.xlsx",
-            sheet_name="Users"
-        )
+        # CHECK EXCEL FILE
+        if os.path.exists("edupro.xlsx"):
 
-        if st.button("Import Users"):
+            users_df = pd.read_excel(
+                "edupro.xlsx",
+                sheet_name="Users"
+            )
 
-            try:
+            if st.button("Import Users"):
 
-                add_student_bulk(users_df)
+                try:
 
-                st.success(
-                    "Students Imported Successfully"
-                )
+                    add_student_bulk(users_df)
 
-            except Exception as e:
+                    st.success(
+                        "Students Imported Successfully"
+                    )
 
-                st.error(f"Error: {e}")
+                except Exception as e:
 
+                    st.error(f"Error: {e}")
+
+        else:
+
+            st.error(
+                "edupro.xlsx file not found"
+            )
+
+            st.stop()
+
+        # VIEW STUDENTS
         data = view_students()
 
         student_df = pd.DataFrame(
@@ -292,23 +313,34 @@ else:
 
                 try:
 
-                    teachers_df = pd.read_excel(
-                        "edupro.xlsx",
-                        sheet_name="Teachers"
-                    )
+                    if os.path.exists("edupro.xlsx"):
 
-                    import_teachers_from_excel(
-                        teachers_df
-                    )
+                        teachers_df = pd.read_excel(
+                            "edupro.xlsx",
+                            sheet_name="Teachers"
+                        )
 
-                    st.success(
-                        "Teachers Imported Successfully"
-                    )
+                        import_teachers_from_excel(
+                            teachers_df
+                        )
+
+                        st.success(
+                            "Teachers Imported Successfully"
+                        )
+
+                    else:
+
+                        st.error(
+                            "edupro.xlsx file not found"
+                        )
 
                 except Exception as e:
 
                     st.error(f"Error: {e}")
 
+            # =================================================
+            # ADD TEACHER
+            # =================================================
             st.subheader("➕ Add Teacher")
 
             teacher_id = st.number_input(
@@ -364,6 +396,9 @@ else:
                     "Teacher Added Successfully"
                 )
 
+            # =================================================
+            # VIEW TEACHERS
+            # =================================================
             st.subheader("📋 Teacher Records")
 
             teacher_data = view_teachers()
