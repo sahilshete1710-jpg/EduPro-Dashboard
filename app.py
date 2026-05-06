@@ -15,9 +15,12 @@ st.set_page_config(
 # =========================================================
 # DATABASE INIT
 # =========================================================
-st.write("DB Path:", os.path.abspath("erp.db"))
-
 create_tables()
+
+st.write(
+    "DB Path:",
+    os.path.abspath("erp.db")
+)
 
 # =========================================================
 # SESSION STATE
@@ -27,7 +30,7 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 # =========================================================
-# LOGIN / SIGNUP MENU
+# LOGIN / SIGNUP
 # =========================================================
 menu = ["Login", "Signup"]
 
@@ -90,9 +93,21 @@ if not st.session_state.logged_in:
 
         if st.button("Create Account"):
 
-            add_user(user, pwd, role)
+            result = add_user(
+                user,
+                pwd,
+                role
+            )
 
-            st.success("Account Created")
+            if result:
+
+                st.success("Account Created")
+
+            else:
+
+                st.warning(
+                    "Username already exists"
+                )
 
 # =========================================================
 # MAIN ERP SYSTEM
@@ -185,33 +200,12 @@ if st.session_state.logged_in:
             x="YearsOfExperience",
             y="TeacherRating",
             color="Expertise",
-            template="plotly_dark",
-            hover_data=["TeacherName"]
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-
-        st.subheader("📚 Course Category Ratings")
-
-        category_avg = (
-            df.groupby("CourseCategory")["CourseRating"]
-            .mean()
-            .reset_index()
-        )
-
-        fig2 = px.bar(
-            category_avg,
-            x="CourseCategory",
-            y="CourseRating",
-            color="CourseCategory",
+            hover_data=["TeacherName"],
             template="plotly_dark"
         )
 
         st.plotly_chart(
-            fig2,
+            fig,
             use_container_width=True
         )
 
@@ -233,13 +227,13 @@ if st.session_state.logged_in:
 
                 add_student_bulk(users_df)
 
-                st.success("Imported Successfully")
-
-            except:
-
-                st.warning(
-                    "Students may already exist"
+                st.success(
+                    "Students Imported"
                 )
+
+            except Exception as e:
+
+                st.error(f"Error: {e}")
 
         data = view_students()
 
@@ -273,10 +267,53 @@ if st.session_state.logged_in:
 
         else:
 
+            # IMPORT TEACHERS
+            st.subheader("📥 Import Teachers")
+
+            if st.button(
+                "Import Teachers from Excel"
+            ):
+
+                try:
+
+                    teachers_df = pd.read_excel(
+                        "EduPro Online Platform.xlsx",
+                        sheet_name="Teachers"
+                    )
+
+                    import_teachers_from_excel(
+                        teachers_df
+                    )
+
+                    st.success(
+                        "Teachers Imported Successfully"
+                    )
+
+                except Exception as e:
+
+                    st.error(f"Error: {e}")
+
+            # ADD TEACHER
             st.subheader("➕ Add Teacher")
+
+            teacher_id = st.number_input(
+                "Teacher ID",
+                step=1
+            )
 
             teacher_name = st.text_input(
                 "Teacher Name"
+            )
+
+            age = st.number_input(
+                "Age",
+                18,
+                80
+            )
+
+            gender = st.selectbox(
+                "Gender",
+                ["Male", "Female", "Other"]
             )
 
             expertise = st.text_input(
@@ -284,7 +321,7 @@ if st.session_state.logged_in:
             )
 
             experience = st.slider(
-                "Years of Experience",
+                "Years Of Experience",
                 0,
                 40
             )
@@ -299,7 +336,10 @@ if st.session_state.logged_in:
             if st.button("Add Teacher"):
 
                 add_teacher(
+                    teacher_id,
                     teacher_name,
+                    age,
+                    gender,
                     expertise,
                     experience,
                     rating
@@ -309,6 +349,7 @@ if st.session_state.logged_in:
                     "Teacher Added Successfully"
                 )
 
+            # VIEW TEACHERS
             st.subheader("📋 Teacher Records")
 
             teacher_data = view_teachers()
@@ -318,23 +359,19 @@ if st.session_state.logged_in:
                 teacher_df = pd.DataFrame(
                     teacher_data,
                     columns=[
-                        "ID",
-                        "Name",
+                        "TeacherID",
+                        "TeacherName",
+                        "Age",
+                        "Gender",
                         "Expertise",
-                        "Experience",
-                        "Rating"
+                        "YearsOfExperience",
+                        "TeacherRating"
                     ]
                 )
 
                 st.dataframe(
                     teacher_df,
                     use_container_width=True
-                )
-
-            else:
-
-                st.info(
-                    "No teacher records found"
                 )
 
     # =====================================================
@@ -391,7 +428,9 @@ if st.session_state.logged_in:
                     status
                 )
 
-                st.success("Attendance Saved")
+                st.success(
+                    "Attendance Saved"
+                )
 
         attendance_df = pd.DataFrame(
             view_attendance(),
@@ -428,7 +467,9 @@ if st.session_state.logged_in:
 
         if student_df.empty:
 
-            st.warning("No students found")
+            st.warning(
+                "No students found"
+            )
 
         else:
 
@@ -462,7 +503,9 @@ if st.session_state.logged_in:
                     marks
                 )
 
-                st.success("Marks Saved")
+                st.success(
+                    "Marks Saved"
+                )
 
         marks_df = pd.DataFrame(
             view_marks(),
@@ -499,7 +542,9 @@ if st.session_state.logged_in:
 
         if student_df.empty:
 
-            st.warning("No students available")
+            st.warning(
+                "No students available"
+            )
 
         else:
 

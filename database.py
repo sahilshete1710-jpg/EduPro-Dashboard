@@ -19,7 +19,7 @@ def create_tables():
     # USERS TABLE
     c.execute('''
     CREATE TABLE IF NOT EXISTS users(
-        username TEXT,
+        username TEXT UNIQUE,
         password TEXT,
         role TEXT
     )
@@ -56,11 +56,13 @@ def create_tables():
     # TEACHERS TABLE
     c.execute('''
     CREATE TABLE IF NOT EXISTS teachers(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        expertise TEXT,
-        experience INTEGER,
-        rating REAL
+        TeacherID INTEGER,
+        TeacherName TEXT,
+        Age INTEGER,
+        Gender TEXT,
+        Expertise TEXT,
+        YearsOfExperience INTEGER,
+        TeacherRating REAL
     )
     ''')
 
@@ -71,7 +73,6 @@ def create_tables():
 # =========================================================
 def add_user(username, password, role):
 
-    # CHECK IF USER ALREADY EXISTS
     c.execute(
         "SELECT * FROM users WHERE username=?",
         (username,)
@@ -80,10 +81,8 @@ def add_user(username, password, role):
     existing_user = c.fetchone()
 
     if existing_user:
-
         return False
 
-    # INSERT NEW USER
     c.execute(
         '''
         INSERT INTO users(username, password, role)
@@ -100,7 +99,10 @@ def add_user(username, password, role):
 def login_user(username, password):
 
     c.execute(
-        "SELECT * FROM users WHERE username=? AND password=?",
+        '''
+        SELECT * FROM users
+        WHERE username=? AND password=?
+        ''',
         (username, password)
     )
 
@@ -254,20 +256,70 @@ def get_student_report(student_id):
 # =========================================================
 # TEACHER FUNCTIONS
 # =========================================================
-def add_teacher(name, expertise, experience, rating):
+def add_teacher(
+    teacher_id,
+    teacher_name,
+    age,
+    gender,
+    expertise,
+    experience,
+    rating
+):
 
     c.execute(
         '''
-        INSERT INTO teachers(name, expertise, experience, rating)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO teachers(
+            TeacherID,
+            TeacherName,
+            Age,
+            Gender,
+            Expertise,
+            YearsOfExperience,
+            TeacherRating
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         ''',
         (
-            name,
+            teacher_id,
+            teacher_name,
+            age,
+            gender,
             expertise,
             experience,
             rating
         )
     )
+
+    conn.commit()
+
+
+def import_teachers_from_excel(df):
+
+    for _, row in df.iterrows():
+
+        c.execute(
+            '''
+            INSERT INTO teachers(
+                TeacherID,
+                TeacherName,
+                Age,
+                Gender,
+                Expertise,
+                YearsOfExperience,
+                TeacherRating
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''',
+            (
+                row["TeacherID"],
+                row["TeacherName"],
+                row["Age"],
+                row["Gender"],
+                row["Expertise"],
+                row["YearsOfExperience"],
+                row["TeacherRating"]
+            )
+        )
 
     conn.commit()
 
