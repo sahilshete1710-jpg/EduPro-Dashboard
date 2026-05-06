@@ -3,79 +3,181 @@ import pandas as pd
 import plotly.express as px
 from database import *
 import os
+
+# =========================================================
+# PAGE CONFIG
+# =========================================================
+st.set_page_config(
+    page_title="EduPro ERP + Analytics",
+    layout="wide"
+)
+
+# =========================================================
+# DATABASE INIT
+# =========================================================
 st.write("DB Path:", os.path.abspath("erp.db"))
 
 create_tables()
 
-# ---------------- SESSION INIT ----------------
+# =========================================================
+# SESSION STATE
+# =========================================================
 if "logged_in" not in st.session_state:
+
     st.session_state.logged_in = False
 
-st.set_page_config(page_title="EduPro ERP + Analytics", layout="wide")
-
-# ---------------- LOGIN / SIGNUP ----------------
+# =========================================================
+# LOGIN / SIGNUP MENU
+# =========================================================
 menu = ["Login", "Signup"]
-choice = st.sidebar.selectbox("Menu", menu)
 
+choice = st.sidebar.selectbox(
+    "Menu",
+    menu
+)
+
+# =========================================================
+# LOGIN SYSTEM
+# =========================================================
 if not st.session_state.logged_in:
 
+    # LOGIN
     if choice == "Login":
+
         st.title("🔐 Login")
 
         user = st.text_input("Username")
-        pwd = st.text_input("Password", type="password")
+
+        pwd = st.text_input(
+            "Password",
+            type="password"
+        )
 
         if st.button("Login"):
+
             result = login_user(user, pwd)
+
             if result:
+
                 st.session_state.logged_in = True
                 st.session_state.user = result[0]
                 st.session_state.role = result[2]
+
                 st.success("Login Successful")
+
                 st.rerun()
+
             else:
+
                 st.error("Invalid credentials")
 
+    # SIGNUP
     elif choice == "Signup":
+
         st.title("📝 Signup")
 
         user = st.text_input("Username")
-        pwd = st.text_input("Password", type="password")
-        role = st.selectbox("Role", ["Student", "Admin", "Teacher"])
+
+        pwd = st.text_input(
+            "Password",
+            type="password"
+        )
+
+        role = st.selectbox(
+            "Role",
+            ["Student", "Admin", "Teacher"]
+        )
 
         if st.button("Create Account"):
+
             add_user(user, pwd, role)
+
             st.success("Account Created")
 
-# ---------------- MAIN SYSTEM ----------------
+# =========================================================
+# MAIN ERP SYSTEM
+# =========================================================
 if st.session_state.logged_in:
 
+    # SIDEBAR
     st.sidebar.title("🎓 EduPro ERP")
-    st.sidebar.write(f"User: {st.session_state.user}")
-    st.sidebar.write(f"Role: {st.session_state.role}")
+
+    st.sidebar.write(
+        f"User: {st.session_state.user}"
+    )
+
+    st.sidebar.write(
+        f"Role: {st.session_state.role}"
+    )
+
+    # ROLE BASED MENU
+    if st.session_state.role == "Admin":
+
+        modules = [
+            "Dashboard",
+            "Analytics",
+            "Students",
+            "Teachers",
+            "Attendance",
+            "Marks",
+            "Report Card"
+        ]
+
+    else:
+
+        modules = [
+            "Dashboard",
+            "Analytics",
+            "Students",
+            "Attendance",
+            "Marks",
+            "Report Card"
+        ]
 
     module = st.sidebar.radio(
-    "Navigation",
-    ["Dashboard", "Analytics", "Students", "Attendance", "Marks", "Report Card"]
-)
+        "Navigation",
+        modules
+    )
 
+    # LOGOUT
     if st.sidebar.button("Logout"):
+
         st.session_state.logged_in = False
+
         st.rerun()
 
+    # LOAD DATASET
     df = pd.read_csv("final_dataset.csv")
 
-    # ---------------- DASHBOARD ----------------
+    # =====================================================
+    # DASHBOARD
+    # =====================================================
     if module == "Dashboard":
+
         st.title("🏠 Dashboard")
 
         col1, col2, col3 = st.columns(3)
-        col1.metric("Courses", df["CourseID"].nunique())
-        col2.metric("Teachers", df["TeacherID"].nunique())
-        col3.metric("Enrollments", len(df))
 
-    # ---------------- ANALYTICS ----------------
+        col1.metric(
+            "Courses",
+            df["CourseID"].nunique()
+        )
+
+        col2.metric(
+            "Teachers",
+            df["TeacherID"].nunique()
+        )
+
+        col3.metric(
+            "Enrollments",
+            len(df)
+        )
+
+    # =====================================================
+    # ANALYTICS
+    # =====================================================
     elif module == "Analytics":
+
         st.title("📊 Analytics")
 
         fig = px.scatter(
@@ -83,101 +185,375 @@ if st.session_state.logged_in:
             x="YearsOfExperience",
             y="TeacherRating",
             color="Expertise",
+            template="plotly_dark",
+            hover_data=["TeacherName"]
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+        st.subheader("📚 Course Category Ratings")
+
+        category_avg = (
+            df.groupby("CourseCategory")["CourseRating"]
+            .mean()
+            .reset_index()
+        )
+
+        fig2 = px.bar(
+            category_avg,
+            x="CourseCategory",
+            y="CourseRating",
+            color="CourseCategory",
             template="plotly_dark"
         )
-        st.plotly_chart(fig, use_container_width=True)
 
-    # ---------------- STUDENTS ----------------
+        st.plotly_chart(
+            fig2,
+            use_container_width=True
+        )
+
+    # =====================================================
+    # STUDENTS
+    # =====================================================
     elif module == "Students":
+
         st.title("👨‍🎓 Students")
 
-        users_df = pd.read_excel("EduPro Online Platform.xlsx", sheet_name="Users")
+        users_df = pd.read_excel(
+            "EduPro Online Platform.xlsx",
+            sheet_name="Users"
+        )
 
         if st.button("Import Users"):
+
             try:
+
                 add_student_bulk(users_df)
-                st.success("Imported!")
+
+                st.success("Imported Successfully")
+
             except:
-                st.warning("Students may already exist")
+
+                st.warning(
+                    "Students may already exist"
+                )
 
         data = view_students()
-        st.dataframe(pd.DataFrame(data, columns=["ID", "Name", "Class", "Age"]))
 
-    # ---------------- ATTENDANCE ----------------
+        student_df = pd.DataFrame(
+            data,
+            columns=[
+                "ID",
+                "Name",
+                "Class",
+                "Age"
+            ]
+        )
+
+        st.dataframe(
+            student_df,
+            use_container_width=True
+        )
+
+    # =====================================================
+    # TEACHERS
+    # =====================================================
+    elif module == "Teachers":
+
+        st.title("👨‍🏫 Teacher Management")
+
+        if st.session_state.role != "Admin":
+
+            st.error(
+                "Only Admin can access this module"
+            )
+
+        else:
+
+            st.subheader("➕ Add Teacher")
+
+            teacher_name = st.text_input(
+                "Teacher Name"
+            )
+
+            expertise = st.text_input(
+                "Expertise"
+            )
+
+            experience = st.slider(
+                "Years of Experience",
+                0,
+                40
+            )
+
+            rating = st.slider(
+                "Teacher Rating",
+                0.0,
+                5.0,
+                4.0
+            )
+
+            if st.button("Add Teacher"):
+
+                add_teacher(
+                    teacher_name,
+                    expertise,
+                    experience,
+                    rating
+                )
+
+                st.success(
+                    "Teacher Added Successfully"
+                )
+
+            st.subheader("📋 Teacher Records")
+
+            teacher_data = view_teachers()
+
+            if teacher_data:
+
+                teacher_df = pd.DataFrame(
+                    teacher_data,
+                    columns=[
+                        "ID",
+                        "Name",
+                        "Expertise",
+                        "Experience",
+                        "Rating"
+                    ]
+                )
+
+                st.dataframe(
+                    teacher_df,
+                    use_container_width=True
+                )
+
+            else:
+
+                st.info(
+                    "No teacher records found"
+                )
+
+    # =====================================================
+    # ATTENDANCE
+    # =====================================================
     elif module == "Attendance":
+
         st.title("📅 Attendance")
 
         students = view_students()
-        student_df = pd.DataFrame(students, columns=["ID", "Name", "Class", "Age"])
+
+        student_df = pd.DataFrame(
+            students,
+            columns=[
+                "ID",
+                "Name",
+                "Class",
+                "Age"
+            ]
+        )
 
         if student_df.empty:
-            st.warning("No students found. Import students first.")
-        else:
-            name_to_id = dict(zip(student_df["Name"], student_df["ID"]))
 
-            selected = st.selectbox("Student", list(name_to_id.keys()))
-            status = st.selectbox("Status", ["Present", "Absent"])
+            st.warning(
+                "No students found"
+            )
+
+        else:
+
+            name_to_id = dict(
+                zip(
+                    student_df["Name"],
+                    student_df["ID"]
+                )
+            )
+
+            selected = st.selectbox(
+                "Student",
+                list(name_to_id.keys())
+            )
+
+            status = st.selectbox(
+                "Status",
+                ["Present", "Absent"]
+            )
+
             date = st.date_input("Date")
 
-            if st.button("Save"):
-                add_attendance(name_to_id[selected], str(date), status)
-                st.success("Saved")
+            if st.button("Save Attendance"):
 
-        st.dataframe(pd.DataFrame(view_attendance(),
-                                 columns=["Student", "Date", "Status"]))
+                add_attendance(
+                    name_to_id[selected],
+                    str(date),
+                    status
+                )
 
-    # ---------------- MARKS ----------------
+                st.success("Attendance Saved")
+
+        attendance_df = pd.DataFrame(
+            view_attendance(),
+            columns=[
+                "Student",
+                "Date",
+                "Status"
+            ]
+        )
+
+        st.dataframe(
+            attendance_df,
+            use_container_width=True
+        )
+
+    # =====================================================
+    # MARKS
+    # =====================================================
     elif module == "Marks":
+
         st.title("📊 Marks")
 
         students = view_students()
-        student_df = pd.DataFrame(students, columns=["ID", "Name", "Class", "Age"])
+
+        student_df = pd.DataFrame(
+            students,
+            columns=[
+                "ID",
+                "Name",
+                "Class",
+                "Age"
+            ]
+        )
 
         if student_df.empty:
-            st.warning("No students found. Import students first.")
+
+            st.warning("No students found")
+
         else:
-            name_to_id = dict(zip(student_df["Name"], student_df["ID"]))
 
-            selected = st.selectbox("Student", list(name_to_id.keys()))
-            subject = st.text_input("Subject")
-            marks = st.slider("Marks", 0, 100)
+            name_to_id = dict(
+                zip(
+                    student_df["Name"],
+                    student_df["ID"]
+                )
+            )
 
-            if st.button("Save"):
-                add_marks(name_to_id[selected], subject, marks)
-                st.success("Saved")
+            selected = st.selectbox(
+                "Student",
+                list(name_to_id.keys())
+            )
 
-        st.dataframe(pd.DataFrame(view_marks(),
-                                 columns=["Student", "Subject", "Marks"]))
- # ---------------- REPORT CARD ----------------
+            subject = st.text_input(
+                "Subject"
+            )
+
+            marks = st.slider(
+                "Marks",
+                0,
+                100
+            )
+
+            if st.button("Save Marks"):
+
+                add_marks(
+                    name_to_id[selected],
+                    subject,
+                    marks
+                )
+
+                st.success("Marks Saved")
+
+        marks_df = pd.DataFrame(
+            view_marks(),
+            columns=[
+                "Student",
+                "Subject",
+                "Marks"
+            ]
+        )
+
+        st.dataframe(
+            marks_df,
+            use_container_width=True
+        )
+
+    # =====================================================
+    # REPORT CARD
+    # =====================================================
     elif module == "Report Card":
+
         st.title("📄 Student Report Card")
 
-    students = view_students()
-    student_df = pd.DataFrame(students, columns=["ID", "Name", "Class", "Age"])
+        students = view_students()
 
-    if student_df.empty:
-        st.warning("No students available")
-    else:
-        name_to_id = dict(zip(student_df["Name"], student_df["ID"]))
+        student_df = pd.DataFrame(
+            students,
+            columns=[
+                "ID",
+                "Name",
+                "Class",
+                "Age"
+            ]
+        )
 
-        selected = st.selectbox("Select Student", list(name_to_id.keys()))
-        student_id = name_to_id[selected]
+        if student_df.empty:
 
-        attendance_pct, avg_marks, marks_data = get_student_report(student_id)
+            st.warning("No students available")
 
-        # KPI Cards
-        col1, col2 = st.columns(2)
-        col1.metric("Attendance %", f"{attendance_pct:.2f}%")
-        col2.metric("Average Marks", f"{avg_marks:.2f}")
-
-        # Marks Table
-        st.subheader("📊 Subject-wise Marks")
-        if marks_data:
-            st.dataframe(pd.DataFrame(marks_data, columns=["Subject", "Marks"]))
         else:
-            st.info("No marks available")
 
-        # Chart
-        if marks_data:
-            df_marks = pd.DataFrame(marks_data, columns=["Subject", "Marks"])
-            st.bar_chart(df_marks.set_index("Subject"))
+            name_to_id = dict(
+                zip(
+                    student_df["Name"],
+                    student_df["ID"]
+                )
+            )
+
+            selected = st.selectbox(
+                "Select Student",
+                list(name_to_id.keys())
+            )
+
+            student_id = name_to_id[selected]
+
+            attendance_pct, avg_marks, marks_data = get_student_report(
+                student_id
+            )
+
+            col1, col2 = st.columns(2)
+
+            col1.metric(
+                "Attendance %",
+                f"{attendance_pct:.2f}%"
+            )
+
+            col2.metric(
+                "Average Marks",
+                f"{avg_marks:.2f}"
+            )
+
+            st.subheader("📊 Subject-wise Marks")
+
+            if marks_data:
+
+                df_marks = pd.DataFrame(
+                    marks_data,
+                    columns=[
+                        "Subject",
+                        "Marks"
+                    ]
+                )
+
+                st.dataframe(
+                    df_marks,
+                    use_container_width=True
+                )
+
+                st.bar_chart(
+                    df_marks.set_index("Subject")
+                )
+
+            else:
+
+                st.info("No marks available")
