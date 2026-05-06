@@ -26,11 +26,10 @@ st.write(
 # SESSION STATE
 # =========================================================
 if "logged_in" not in st.session_state:
-
     st.session_state.logged_in = False
 
 # =========================================================
-# LOGIN / SIGNUP
+# LOGIN / SIGNUP MENU
 # =========================================================
 menu = ["Login", "Signup"]
 
@@ -114,7 +113,9 @@ if not st.session_state.logged_in:
 # =========================================================
 if st.session_state.logged_in:
 
+    # =====================================================
     # SIDEBAR
+    # =====================================================
     st.sidebar.title("🎓 EduPro ERP")
 
     st.sidebar.write(
@@ -125,7 +126,9 @@ if st.session_state.logged_in:
         f"Role: {st.session_state.role}"
     )
 
+    # =====================================================
     # ROLE BASED MENU
+    # =====================================================
     if st.session_state.role == "Admin":
 
         modules = [
@@ -154,14 +157,18 @@ if st.session_state.logged_in:
         modules
     )
 
+    # =====================================================
     # LOGOUT
+    # =====================================================
     if st.sidebar.button("Logout"):
 
         st.session_state.logged_in = False
 
         st.rerun()
 
+    # =====================================================
     # LOAD DATASET
+    # =====================================================
     df = pd.read_csv("final_dataset.csv")
 
     # =====================================================
@@ -210,50 +217,51 @@ if st.session_state.logged_in:
         )
 
     # =====================================================
-# STUDENTS
-# =====================================================
-elif module == "Students":
+    # STUDENTS
+    # =====================================================
+    elif module == "Students":
 
-    st.title("👨‍🎓 Students")
+        st.title("👨‍🎓 Students")
 
-    users_df = pd.read_excel(
-        "EduPro Online Platform.xlsx",
-        sheet_name="Users"
-    )
+        users_df = pd.read_excel(
+            "EduPro Online Platform.xlsx",
+            sheet_name="Users"
+        )
 
-    # SHOW COLUMN NAMES
-    st.write(users_df.columns)
+        # SHOW COLUMN NAMES
+        st.write(users_df.columns)
 
-    if st.button("Import Users"):
+        if st.button("Import Users"):
 
-        try:
+            try:
 
-            add_student_bulk(users_df)
+                add_student_bulk(users_df)
 
-            st.success(
-                "Students Imported"
-            )
+                st.success(
+                    "Students Imported"
+                )
 
-        except Exception as e:
+            except Exception as e:
 
-            st.error(f"Error: {e}")
+                st.error(f"Error: {e}")
 
-    data = view_students()
+        data = view_students()
 
-    student_df = pd.DataFrame(
-        data,
-        columns=[
-            "ID",
-            "Name",
-            "Class",
-            "Age"
-        ]
-    )
+        student_df = pd.DataFrame(
+            data,
+            columns=[
+                "ID",
+                "Name",
+                "Class",
+                "Age"
+            ]
+        )
 
-    st.dataframe(
-        student_df,
-        use_container_width=True
-    )
+        st.dataframe(
+            student_df,
+            use_container_width=True
+        )
+
     # =====================================================
     # TEACHERS
     # =====================================================
@@ -374,6 +382,12 @@ elif module == "Students":
                 st.dataframe(
                     teacher_df,
                     use_container_width=True
+                )
+
+            else:
+
+                st.info(
+                    "No teacher records found"
                 )
 
     # =====================================================
@@ -603,4 +617,6 @@ elif module == "Students":
 
             else:
 
-                st.info("No marks available")
+                st.info(
+                    "No marks available"
+                )
