@@ -113,7 +113,13 @@ def login_user(username, password):
 # =========================================================
 def add_student_bulk(df):
 
+    # PRINT COLUMN NAMES
+    print("Excel Columns:", df.columns)
+
     for _, row in df.iterrows():
+
+        # TAKE FIRST COLUMN AS STUDENT NAME
+        student_name = str(row.iloc[0])
 
         c.execute(
             '''
@@ -121,9 +127,9 @@ def add_student_bulk(df):
             VALUES (?, ?, ?)
             ''',
             (
-                row["Name"],
-                row["Class"],
-                row["Age"]
+                student_name,
+                "Default",
+                18
             )
         )
 
@@ -132,7 +138,9 @@ def add_student_bulk(df):
 
 def view_students():
 
-    c.execute("SELECT * FROM students")
+    c.execute(
+        "SELECT * FROM students"
+    )
 
     return c.fetchall()
 
@@ -146,7 +154,11 @@ def add_attendance(student_id, date, status):
         INSERT INTO attendance(student_id, date, status)
         VALUES (?, ?, ?)
         ''',
-        (student_id, date, status)
+        (
+            student_id,
+            date,
+            status
+        )
     )
 
     conn.commit()
@@ -173,7 +185,11 @@ def add_marks(student_id, subject, marks):
         INSERT INTO marks(student_id, subject, marks)
         VALUES (?, ?, ?)
         ''',
-        (student_id, subject, marks)
+        (
+            student_id,
+            subject,
+            marks
+        )
     )
 
     conn.commit()
@@ -207,7 +223,7 @@ def get_student_report(student_id):
 
     total = c.fetchone()[0]
 
-    # PRESENT COUNT
+    # PRESENT ATTENDANCE
     c.execute(
         '''
         SELECT COUNT(*)
@@ -251,7 +267,11 @@ def get_student_report(student_id):
 
     marks_data = c.fetchall()
 
-    return attendance_pct, avg_marks, marks_data
+    return (
+        attendance_pct,
+        avg_marks,
+        marks_data
+    )
 
 # =========================================================
 # TEACHER FUNCTIONS
@@ -326,6 +346,8 @@ def import_teachers_from_excel(df):
 
 def view_teachers():
 
-    c.execute("SELECT * FROM teachers")
+    c.execute(
+        "SELECT * FROM teachers"
+    )
 
     return c.fetchall()
