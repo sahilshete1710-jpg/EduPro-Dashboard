@@ -148,9 +148,9 @@ if st.session_state.logged_in:
 
         st.dataframe(pd.DataFrame(view_marks(),
                                  columns=["Student", "Subject", "Marks"]))
-                                 # ---------------- REPORT CARD ----------------
-elif module == "Report Card":
-    st.title("📄 Student Report Card")
+ # ---------------- REPORT CARD ----------------
+    elif module == "Report Card":
+        st.title("📄 Student Report Card")
 
     students = view_students()
     student_df = pd.DataFrame(students, columns=["ID", "Name", "Class", "Age"])
