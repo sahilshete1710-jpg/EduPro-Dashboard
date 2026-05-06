@@ -26,7 +26,6 @@ st.write(
 # SESSION STATE
 # =========================================================
 if "logged_in" not in st.session_state:
-
     st.session_state.logged_in = False
 
 # =========================================================
@@ -44,7 +43,9 @@ choice = st.sidebar.selectbox(
 # =========================================================
 if not st.session_state.logged_in:
 
+    # =====================================================
     # LOGIN
+    # =====================================================
     if choice == "Login":
 
         st.title("🔐 Login")
@@ -74,7 +75,9 @@ if not st.session_state.logged_in:
 
                 st.error("Invalid credentials")
 
+    # =====================================================
     # SIGNUP
+    # =====================================================
     elif choice == "Signup":
 
         st.title("📝 Signup")
@@ -110,11 +113,13 @@ if not st.session_state.logged_in:
                 )
 
 # =========================================================
-# MAIN ERP SYSTEM
+# MAIN SYSTEM
 # =========================================================
-if st.session_state.logged_in:
+else:
 
+    # =====================================================
     # SIDEBAR
+    # =====================================================
     st.sidebar.title("🎓 EduPro ERP")
 
     st.sidebar.write(
@@ -125,7 +130,9 @@ if st.session_state.logged_in:
         f"Role: {st.session_state.role}"
     )
 
+    # =====================================================
     # ROLE BASED MENU
+    # =====================================================
     if st.session_state.role == "Admin":
 
         modules = [
@@ -154,14 +161,18 @@ if st.session_state.logged_in:
         modules
     )
 
+    # =====================================================
     # LOGOUT
+    # =====================================================
     if st.sidebar.button("Logout"):
 
         st.session_state.logged_in = False
 
         st.rerun()
 
+    # =====================================================
     # LOAD DATASET
+    # =====================================================
     df = pd.read_csv("final_dataset.csv")
 
     # =====================================================
@@ -210,50 +221,51 @@ if st.session_state.logged_in:
         )
 
     # =====================================================
-# STUDENTS
-# =====================================================
-elif module == "Students":
+    # STUDENTS
+    # =====================================================
+    elif module == "Students":
 
-    st.title("👨‍🎓 Students")
+        st.title("👨‍🎓 Students")
 
-    users_df = pd.read_excel(
-        "EduPro Online Platform.xlsx",
-        sheet_name="Users"
-    )
+        users_df = pd.read_excel(
+            "EduPro Online Platform.xlsx",
+            sheet_name="Users"
+        )
 
-    # SHOW COLUMN NAMES
-    st.write(users_df.columns)
+        st.write("Excel Columns:")
+        st.write(users_df.columns)
 
-    if st.button("Import Users"):
+        if st.button("Import Users"):
 
-        try:
+            try:
 
-            add_student_bulk(users_df)
+                add_student_bulk(users_df)
 
-            st.success(
-                "Students Imported"
-            )
+                st.success(
+                    "Students Imported Successfully"
+                )
 
-        except Exception as e:
+            except Exception as e:
 
-            st.error(f"Error: {e}")
+                st.error(f"Error: {e}")
 
-    data = view_students()
+        data = view_students()
 
-    student_df = pd.DataFrame(
-        data,
-        columns=[
-            "ID",
-            "Name",
-            "Class",
-            "Age"
-        ]
-    )
+        student_df = pd.DataFrame(
+            data,
+            columns=[
+                "ID",
+                "Name",
+                "Class",
+                "Age"
+            ]
+        )
 
-    st.dataframe(
-        student_df,
-        use_container_width=True
-    )
+        st.dataframe(
+            student_df,
+            use_container_width=True
+        )
+
     # =====================================================
     # TEACHERS
     # =====================================================
@@ -269,7 +281,9 @@ elif module == "Students":
 
         else:
 
+            # =================================================
             # IMPORT TEACHERS
+            # =================================================
             st.subheader("📥 Import Teachers")
 
             if st.button(
@@ -295,7 +309,9 @@ elif module == "Students":
 
                     st.error(f"Error: {e}")
 
+            # =================================================
             # ADD TEACHER
+            # =================================================
             st.subheader("➕ Add Teacher")
 
             teacher_id = st.number_input(
@@ -351,7 +367,9 @@ elif module == "Students":
                     "Teacher Added Successfully"
                 )
 
+            # =================================================
             # VIEW TEACHERS
+            # =================================================
             st.subheader("📋 Teacher Records")
 
             teacher_data = view_teachers()
@@ -374,6 +392,12 @@ elif module == "Students":
                 st.dataframe(
                     teacher_df,
                     use_container_width=True
+                )
+
+            else:
+
+                st.info(
+                    "No teacher records found"
                 )
 
     # =====================================================
@@ -603,4 +627,6 @@ elif module == "Students":
 
             else:
 
-                st.info("No marks available")
+                st.info(
+                    "No marks available"
+                )
