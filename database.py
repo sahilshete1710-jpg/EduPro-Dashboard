@@ -71,12 +71,30 @@ def create_tables():
 # =========================================================
 def add_user(username, password, role):
 
+    # CHECK IF USER ALREADY EXISTS
     c.execute(
-        "INSERT INTO users VALUES (?, ?, ?)",
+        "SELECT * FROM users WHERE username=?",
+        (username,)
+    )
+
+    existing_user = c.fetchone()
+
+    if existing_user:
+
+        return False
+
+    # INSERT NEW USER
+    c.execute(
+        '''
+        INSERT INTO users(username, password, role)
+        VALUES (?, ?, ?)
+        ''',
         (username, password, role)
     )
 
     conn.commit()
+
+    return True
 
 
 def login_user(username, password):
