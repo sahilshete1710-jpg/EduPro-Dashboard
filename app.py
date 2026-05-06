@@ -17,10 +17,16 @@ st.set_page_config(
 # =========================================================
 create_tables()
 
-st.write(
-    "DB Path:",
-    os.path.abspath("erp.db")
-)
+# DEFAULT USERS
+try:
+    add_user("admin", "admin123", "Admin")
+except:
+    pass
+
+try:
+    add_user("teacher", "teacher123", "Teacher")
+except:
+    pass
 
 # =========================================================
 # SESSION STATE
@@ -43,7 +49,9 @@ choice = st.sidebar.selectbox(
 # =========================================================
 if not st.session_state.logged_in:
 
+    # =====================================================
     # LOGIN
+    # =====================================================
     if choice == "Login":
 
         st.title("🔐 Login")
@@ -73,7 +81,9 @@ if not st.session_state.logged_in:
 
                 st.error("Invalid credentials")
 
+    # =====================================================
     # SIGNUP
+    # =====================================================
     elif choice == "Signup":
 
         st.title("📝 Signup")
@@ -113,7 +123,9 @@ if not st.session_state.logged_in:
 # =========================================================
 else:
 
+    # =====================================================
     # SIDEBAR
+    # =====================================================
     st.sidebar.title("🎓 EduPro ERP")
 
     st.sidebar.write(
@@ -124,7 +136,9 @@ else:
         f"Role: {st.session_state.role}"
     )
 
+    # =====================================================
     # ROLE BASED MENU
+    # =====================================================
     if st.session_state.role == "Admin":
 
         modules = [
@@ -153,14 +167,18 @@ else:
         modules
     )
 
+    # =====================================================
     # LOGOUT
+    # =====================================================
     if st.sidebar.button("Logout"):
 
         st.session_state.logged_in = False
 
         st.rerun()
 
+    # =====================================================
     # LOAD DATASET
+    # =====================================================
     df = pd.read_csv("final_dataset.csv")
 
     # =====================================================
@@ -216,12 +234,9 @@ else:
         st.title("👨‍🎓 Students")
 
         users_df = pd.read_excel(
-            "EduPro Online Platform.xlsx",
+            "edupro.xlsx",
             sheet_name="Users"
         )
-
-        st.write("Excel Columns:")
-        st.write(users_df.columns)
 
         if st.button("Import Users"):
 
@@ -278,7 +293,7 @@ else:
                 try:
 
                     teachers_df = pd.read_excel(
-                        "EduPro Online Platform.xlsx",
+                        "edupro.xlsx",
                         sheet_name="Teachers"
                     )
 
