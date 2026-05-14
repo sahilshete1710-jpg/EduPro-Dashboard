@@ -1,25 +1,222 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from database import *
 import os
+from database import *
 
 # =========================================================
 # PAGE CONFIG
 # =========================================================
+
 st.set_page_config(
-    page_title="EduPro ERP + Analytics",
-    layout="wide"
+    page_title="EduPro Smart ERP",
+    page_icon="🎓",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 # =========================================================
-# DATABASE INIT
+# PREMIUM CSS
 # =========================================================
+
+st.markdown("""
+<style>
+
+.stApp {
+    background: linear-gradient(
+        -45deg,
+        #020617,
+        #0f172a,
+        #1e3a8a,
+        #4c1d95,
+        #0f766e,
+        #1d4ed8
+    );
+
+    background-size: 600% 600%;
+
+    animation: gradientAnimation 18s ease infinite;
+
+    color: white;
+}
+
+@keyframes gradientAnimation {
+
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.stApp::before {
+
+    content: '';
+
+    position: fixed;
+
+    width: 600px;
+
+    height: 600px;
+
+    background: rgba(59,130,246,0.25);
+
+    border-radius: 50%;
+
+    top: -200px;
+
+    left: -150px;
+
+    filter: blur(120px);
+
+    z-index: -1;
+}
+
+.stApp::after {
+
+    content: '';
+
+    position: fixed;
+
+    width: 500px;
+
+    height: 500px;
+
+    background: rgba(168,85,247,0.22);
+
+    border-radius: 50%;
+
+    bottom: -150px;
+
+    right: -120px;
+
+    filter: blur(120px);
+
+    z-index: -1;
+}
+
+section[data-testid="stSidebar"] {
+
+    background: rgba(15,23,42,0.88);
+
+    backdrop-filter: blur(20px);
+}
+
+section[data-testid="stSidebar"] * {
+    color: white !important;
+}
+
+h1, h2, h3, h4 {
+    color: white !important;
+}
+
+[data-testid="metric-container"] {
+
+    background: rgba(255,255,255,0.08);
+
+    border-radius: 22px;
+
+    padding: 22px;
+
+    border: 1px solid rgba(255,255,255,0.1);
+
+    backdrop-filter: blur(16px);
+
+    box-shadow: 0px 10px 35px rgba(0,0,0,0.35);
+
+    transition: 0.3s;
+}
+
+[data-testid="metric-container"]:hover {
+
+    transform: translateY(-8px);
+}
+
+.stButton > button {
+
+    width: 100%;
+
+    height: 50px;
+
+    border-radius: 15px;
+
+    border: none;
+
+    background: linear-gradient(
+        90deg,
+        #2563eb,
+        #7c3aed,
+        #06b6d4
+    );
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: bold;
+}
+
+.stButton > button:hover {
+
+    transform: scale(1.03);
+
+    transition: 0.3s;
+}
+
+[data-testid="stDataFrame"] {
+
+    background: rgba(255,255,255,0.06);
+
+    border-radius: 20px;
+
+    padding: 10px;
+}
+
+.hero {
+
+    background: rgba(255,255,255,0.08);
+
+    padding: 40px;
+
+    border-radius: 30px;
+
+    text-align: center;
+
+    backdrop-filter: blur(18px);
+
+    margin-bottom: 30px;
+}
+
+.footer {
+
+    text-align: center;
+
+    color: white;
+
+    opacity: 0.8;
+
+    margin-top: 40px;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# =========================================================
+# DATABASE
+# =========================================================
+
 create_tables()
 
 # =========================================================
 # DEFAULT USERS
 # =========================================================
+
 try:
     add_user("admin", "admin123", "Admin")
 except:
@@ -30,15 +227,22 @@ try:
 except:
     pass
 
+try:
+    add_user("student", "student123", "Student")
+except:
+    pass
+
 # =========================================================
 # SESSION STATE
 # =========================================================
+
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 # =========================================================
-# LOGIN / SIGNUP MENU
+# LOGIN MENU
 # =========================================================
+
 menu = ["Login", "Signup"]
 
 choice = st.sidebar.selectbox(
@@ -49,14 +253,20 @@ choice = st.sidebar.selectbox(
 # =========================================================
 # LOGIN SYSTEM
 # =========================================================
+
 if not st.session_state.logged_in:
 
-    # =====================================================
-    # LOGIN
-    # =====================================================
     if choice == "Login":
 
-        st.title("🔐 Login")
+        st.markdown("""
+        <div class='hero'>
+
+        <h1>🎓 EduPro Smart ERP</h1>
+
+        <h3>Premium School & College Management System</h3>
+
+        </div>
+        """, unsafe_allow_html=True)
 
         user = st.text_input("Username")
 
@@ -81,14 +291,11 @@ if not st.session_state.logged_in:
 
             else:
 
-                st.error("Invalid credentials")
+                st.error("Invalid Credentials")
 
-    # =====================================================
-    # SIGNUP
-    # =====================================================
     elif choice == "Signup":
 
-        st.title("📝 Signup")
+        st.title("📝 Create Account")
 
         user = st.text_input("Username")
 
@@ -99,7 +306,7 @@ if not st.session_state.logged_in:
 
         role = st.selectbox(
             "Role",
-            ["Student", "Admin", "Teacher"]
+            ["Student", "Teacher", "Admin"]
         )
 
         if st.button("Create Account"):
@@ -111,172 +318,197 @@ if not st.session_state.logged_in:
             )
 
             if result:
-
                 st.success("Account Created")
-
             else:
-
-                st.warning(
-                    "Username already exists"
-                )
+                st.warning("Username already exists")
 
 # =========================================================
 # MAIN SYSTEM
 # =========================================================
+
 else:
 
-    # =====================================================
-    # SIDEBAR
-    # =====================================================
-    st.sidebar.title("🎓 EduPro ERP")
+    st.sidebar.markdown("""
+    <center>
+
+    <img src='https://cdn-icons-png.flaticon.com/512/3135/3135755.png'
+    width='130'>
+
+    <h2>EduPro ERP</h2>
+
+    <p>Smart Education Portal</p>
+
+    </center>
+    """, unsafe_allow_html=True)
 
     st.sidebar.write(
-        f"User: {st.session_state.user}"
+        f"👤 User: {st.session_state.user}"
     )
 
     st.sidebar.write(
-        f"Role: {st.session_state.role}"
+        f"🛡 Role: {st.session_state.role}"
     )
 
     # =====================================================
-    # ROLE BASED MENU
+    # ROLE BASED ACCESS
     # =====================================================
+
     if st.session_state.role == "Admin":
 
         modules = [
             "Dashboard",
-            "Analytics",
-            "Students",
             "Teachers",
+            "Students",
+            "Courses",
+            "Transactions",
+            "Analytics",
             "Attendance",
             "Marks",
+            "Report Card"
+        ]
+
+    elif st.session_state.role == "Teacher":
+
+        modules = [
+            "Dashboard",
+            "Teachers",
+            "Students",
+            "Courses",
+            "Transactions",
+            "Analytics",
+            "Attendance",
+            "Marks",
+            "Report Card"
+        ]
+
+    elif st.session_state.role == "Student":
+
+        modules = [
+            "Dashboard",
+            "Students",
+            "Transactions",
+            "Analytics",
+            "Attendance",
+            "Courses",
             "Report Card"
         ]
 
     else:
 
-        modules = [
-            "Dashboard",
-            "Analytics",
-            "Students",
-            "Attendance",
-            "Marks",
-            "Report Card"
-        ]
+        modules = ["Dashboard"]
 
     module = st.sidebar.radio(
         "Navigation",
         modules
     )
 
-    # =====================================================
-    # LOGOUT
-    # =====================================================
     if st.sidebar.button("Logout"):
 
         st.session_state.logged_in = False
-
         st.rerun()
 
     # =====================================================
     # LOAD DATASET
     # =====================================================
+
     if os.path.exists("final_dataset.csv"):
 
         df = pd.read_csv("final_dataset.csv")
 
     else:
 
-        st.error("final_dataset.csv file not found")
+        st.error("final_dataset.csv not found")
         st.stop()
 
     # =====================================================
     # DASHBOARD
     # =====================================================
+
     if module == "Dashboard":
 
-        st.title("🏠 Dashboard")
+        st.markdown("""
+        <div class='hero'>
 
-        col1, col2, col3 = st.columns(3)
+        <h1>🎓 EduPro Smart ERP Dashboard</h1>
 
-        col1.metric(
-            "Courses",
-            df["CourseID"].nunique()
-        )
+        <h3>
+        AI Powered Education Analytics Platform
+        </h3>
 
-        col2.metric(
-            "Teachers",
-            df["TeacherID"].nunique()
-        )
+        </div>
+        """, unsafe_allow_html=True)
 
-        col3.metric(
-            "Enrollments",
-            len(df)
-        )
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.metric(
+                "👨‍🎓 Students",
+                len(view_students())
+            )
+
+        with col2:
+            st.metric(
+                "👨‍🏫 Teachers",
+                df["TeacherID"].nunique()
+            )
+
+        with col3:
+            st.metric(
+                "📚 Courses",
+                df["CourseID"].nunique()
+            )
+
+        with col4:
+            st.metric(
+                "💳 Transactions",
+                len(df)
+            )
 
     # =====================================================
-    # ANALYTICS
+    # TEACHERS
     # =====================================================
-    elif module == "Analytics":
 
-        st.title("📊 Analytics")
+    elif module == "Teachers":
 
-        fig = px.scatter(
-            df,
-            x="YearsOfExperience",
-            y="TeacherRating",
-            color="Expertise",
-            hover_data=["TeacherName"],
-            template="plotly_dark"
+        if st.session_state.role == "Student":
+
+            st.error("Access Denied")
+            st.stop()
+
+        st.title("👨‍🏫 Teachers")
+
+        teacher_data = view_teachers()
+
+        teacher_df = pd.DataFrame(
+            teacher_data,
+            columns=[
+                "TeacherID",
+                "TeacherName",
+                "Age",
+                "Gender",
+                "Expertise",
+                "YearsOfExperience",
+                "TeacherRating"
+            ]
         )
 
-        st.plotly_chart(
-            fig,
+        st.dataframe(
+            teacher_df,
             use_container_width=True
         )
 
     # =====================================================
     # STUDENTS
     # =====================================================
+
     elif module == "Students":
 
         st.title("👨‍🎓 Students")
 
-        # CHECK EXCEL FILE
-        if os.path.exists("edupro.xlsx"):
-
-            users_df = pd.read_excel(
-                "edupro.xlsx",
-                sheet_name="Users"
-            )
-
-            if st.button("Import Users"):
-
-                try:
-
-                    add_student_bulk(users_df)
-
-                    st.success(
-                        "Students Imported Successfully"
-                    )
-
-                except Exception as e:
-
-                    st.error(f"Error: {e}")
-
-        else:
-
-            st.error(
-                "edupro.xlsx file not found"
-            )
-
-            st.stop()
-
-        # VIEW STUDENTS
-        data = view_students()
+        student_data = view_students()
 
         student_df = pd.DataFrame(
-            data,
+            student_data,
             columns=[
                 "ID",
                 "Name",
@@ -291,201 +523,95 @@ else:
         )
 
     # =====================================================
-    # TEACHERS
+    # COURSES
     # =====================================================
-    elif module == "Teachers":
 
-        st.title("👨‍🏫 Teacher Management")
+    elif module == "Courses":
 
-        if st.session_state.role != "Admin":
+        st.title("📚 Courses")
 
-            st.error(
-                "Only Admin can access this module"
-            )
+        courses_df = pd.read_excel(
+            "edupro.xlsx",
+            sheet_name="Courses"
+        )
 
-        else:
+        st.dataframe(
+            courses_df,
+            use_container_width=True
+        )
 
-            st.subheader("📥 Import Teachers")
+        fig = px.bar(
+            courses_df,
+            x="CourseCategory",
+            y="CourseRating",
+            color="CourseLevel",
+            template="plotly_dark"
+        )
 
-            if st.button(
-                "Import Teachers from Excel"
-            ):
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
-                try:
+    # =====================================================
+    # TRANSACTIONS
+    # =====================================================
 
-                    if os.path.exists("edupro.xlsx"):
+    elif module == "Transactions":
 
-                        teachers_df = pd.read_excel(
-                            "edupro.xlsx",
-                            sheet_name="Teachers"
-                        )
+        st.title("💳 Transactions")
 
-                        import_teachers_from_excel(
-                            teachers_df
-                        )
+        transactions_df = pd.read_excel(
+            "edupro.xlsx",
+            sheet_name="Transactions"
+        )
 
-                        st.success(
-                            "Teachers Imported Successfully"
-                        )
+        st.dataframe(
+            transactions_df,
+            use_container_width=True
+        )
 
-                    else:
+    # =====================================================
+    # ANALYTICS
+    # =====================================================
 
-                        st.error(
-                            "edupro.xlsx file not found"
-                        )
+    elif module == "Analytics":
 
-                except Exception as e:
+        st.title("📊 Analytics Dashboard")
 
-                    st.error(f"Error: {e}")
+        fig = px.scatter(
+            df,
+            x="YearsOfExperience",
+            y="TeacherRating",
+            color="Expertise",
+            size="CourseRating",
+            hover_data=[
+                "TeacherName",
+                "CourseName"
+            ],
+            template="plotly_dark",
+            title="Instructor Experience vs Performance",
+            size_max=35
+        )
 
-            # =================================================
-            # ADD TEACHER
-            # =================================================
-            st.subheader("➕ Add Teacher")
+        fig.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="white")
+        )
 
-            teacher_id = st.number_input(
-                "Teacher ID",
-                step=1
-            )
-
-            teacher_name = st.text_input(
-                "Teacher Name"
-            )
-
-            age = st.number_input(
-                "Age",
-                18,
-                80
-            )
-
-            gender = st.selectbox(
-                "Gender",
-                ["Male", "Female", "Other"]
-            )
-
-            expertise = st.text_input(
-                "Expertise"
-            )
-
-            experience = st.slider(
-                "Years Of Experience",
-                0,
-                40
-            )
-
-            rating = st.slider(
-                "Teacher Rating",
-                0.0,
-                5.0,
-                4.0
-            )
-
-            if st.button("Add Teacher"):
-
-                add_teacher(
-                    teacher_id,
-                    teacher_name,
-                    age,
-                    gender,
-                    expertise,
-                    experience,
-                    rating
-                )
-
-                st.success(
-                    "Teacher Added Successfully"
-                )
-
-            # =================================================
-            # VIEW TEACHERS
-            # =================================================
-            st.subheader("📋 Teacher Records")
-
-            teacher_data = view_teachers()
-
-            if teacher_data:
-
-                teacher_df = pd.DataFrame(
-                    teacher_data,
-                    columns=[
-                        "TeacherID",
-                        "TeacherName",
-                        "Age",
-                        "Gender",
-                        "Expertise",
-                        "YearsOfExperience",
-                        "TeacherRating"
-                    ]
-                )
-
-                st.dataframe(
-                    teacher_df,
-                    use_container_width=True
-                )
-
-            else:
-
-                st.info(
-                    "No teacher records found"
-                )
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
     # =====================================================
     # ATTENDANCE
     # =====================================================
+
     elif module == "Attendance":
 
         st.title("📅 Attendance")
-
-        students = view_students()
-
-        student_df = pd.DataFrame(
-            students,
-            columns=[
-                "ID",
-                "Name",
-                "Class",
-                "Age"
-            ]
-        )
-
-        if student_df.empty:
-
-            st.warning(
-                "No students found"
-            )
-
-        else:
-
-            name_to_id = dict(
-                zip(
-                    student_df["Name"],
-                    student_df["ID"]
-                )
-            )
-
-            selected = st.selectbox(
-                "Student",
-                list(name_to_id.keys())
-            )
-
-            status = st.selectbox(
-                "Status",
-                ["Present", "Absent"]
-            )
-
-            date = st.date_input("Date")
-
-            if st.button("Save Attendance"):
-
-                add_attendance(
-                    name_to_id[selected],
-                    str(date),
-                    status
-                )
-
-                st.success(
-                    "Attendance Saved"
-                )
 
         attendance_df = pd.DataFrame(
             view_attendance(),
@@ -504,63 +630,15 @@ else:
     # =====================================================
     # MARKS
     # =====================================================
+
     elif module == "Marks":
 
+        if st.session_state.role == "Student":
+
+            st.error("Access Denied")
+            st.stop()
+
         st.title("📊 Marks")
-
-        students = view_students()
-
-        student_df = pd.DataFrame(
-            students,
-            columns=[
-                "ID",
-                "Name",
-                "Class",
-                "Age"
-            ]
-        )
-
-        if student_df.empty:
-
-            st.warning(
-                "No students found"
-            )
-
-        else:
-
-            name_to_id = dict(
-                zip(
-                    student_df["Name"],
-                    student_df["ID"]
-                )
-            )
-
-            selected = st.selectbox(
-                "Student",
-                list(name_to_id.keys())
-            )
-
-            subject = st.text_input(
-                "Subject"
-            )
-
-            marks = st.slider(
-                "Marks",
-                0,
-                100
-            )
-
-            if st.button("Save Marks"):
-
-                add_marks(
-                    name_to_id[selected],
-                    subject,
-                    marks
-                )
-
-                st.success(
-                    "Marks Saved"
-                )
 
         marks_df = pd.DataFrame(
             view_marks(),
@@ -579,9 +657,10 @@ else:
     # =====================================================
     # REPORT CARD
     # =====================================================
+
     elif module == "Report Card":
 
-        st.title("📄 Student Report Card")
+        st.title("📄 Report Card")
 
         students = view_students()
 
@@ -597,9 +676,7 @@ else:
 
         if student_df.empty:
 
-            st.warning(
-                "No students available"
-            )
+            st.warning("No students available")
 
         else:
 
@@ -623,39 +700,34 @@ else:
 
             col1, col2 = st.columns(2)
 
-            col1.metric(
-                "Attendance %",
-                f"{attendance_pct:.2f}%"
-            )
-
-            col2.metric(
-                "Average Marks",
-                f"{avg_marks:.2f}"
-            )
-
-            st.subheader("📊 Subject-wise Marks")
-
-            if marks_data:
-
-                df_marks = pd.DataFrame(
-                    marks_data,
-                    columns=[
-                        "Subject",
-                        "Marks"
-                    ]
+            with col1:
+                st.metric(
+                    "Attendance %",
+                    f"{attendance_pct:.2f}%"
                 )
 
-                st.dataframe(
-                    df_marks,
-                    use_container_width=True
+            with col2:
+                st.metric(
+                    "Average Marks",
+                    f"{avg_marks:.2f}"
                 )
 
-                st.bar_chart(
-                    df_marks.set_index("Subject")
-                )
+    # =====================================================
+    # FOOTER
+    # =====================================================
 
-            else:
+    st.markdown("""
+    <div class='footer'>
 
-                st.info(
-                    "No marks available"
-                )
+    <hr>
+
+    <h3>
+    🎓 EduPro Smart ERP System
+    </h3>
+
+    <p>
+    Premium AI Powered Education Platform
+    </p>
+
+    </div>
+    """, unsafe_allow_html=True)

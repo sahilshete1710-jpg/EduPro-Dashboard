@@ -1,347 +1,427 @@
-import sqlite3
-import pandas as pd
+import mysql.connector
 
-# =========================================================
+
+# =========================================
 # DATABASE CONNECTION
-# =========================================================
-conn = sqlite3.connect(
-    "erp.db",
-    check_same_thread=False
-)
+# =========================================
+def get_connection():
 
-c = conn.cursor()
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="root123",  
+        database="edupro",
+        auth_plugin="mysql_native_password",
+        ssl_disabled=True
+    )
 
-# =========================================================
+    return conn
+
+
+# =========================================
 # CREATE TABLES
-# =========================================================
+# =========================================
 def create_tables():
 
+    conn = get_connection()
+    c = conn.cursor()
+
     # USERS TABLE
-    c.execute('''
-    CREATE TABLE IF NOT EXISTS users(
-        username TEXT UNIQUE,
-        password TEXT,
-        role TEXT
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255),
+        password VARCHAR(255),
+        role VARCHAR(50)
     )
-    ''')
+    """)
 
     # STUDENTS TABLE
-    c.execute('''
-    CREATE TABLE IF NOT EXISTS students(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        class TEXT,
-        age INTEGER
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS students (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_name VARCHAR(255),
+        student_email VARCHAR(255),
+        student_phone VARCHAR(20),
+        course VARCHAR(255),
+        attendance INT DEFAULT 0
     )
-    ''')
-
-    # ATTENDANCE TABLE
-    c.execute('''
-    CREATE TABLE IF NOT EXISTS attendance(
-        student_id INTEGER,
-        date TEXT,
-        status TEXT
-    )
-    ''')
-
-    # MARKS TABLE
-    c.execute('''
-    CREATE TABLE IF NOT EXISTS marks(
-        student_id INTEGER,
-        subject TEXT,
-        marks INTEGER
-    )
-    ''')
+    """)
 
     # TEACHERS TABLE
-    c.execute('''
-    CREATE TABLE IF NOT EXISTS teachers(
-        TeacherID INTEGER,
-        TeacherName TEXT,
-        Age INTEGER,
-        Gender TEXT,
-        Expertise TEXT,
-        YearsOfExperience INTEGER,
-        TeacherRating REAL
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS teachers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        teacher_name VARCHAR(255),
+        teacher_email VARCHAR(255),
+        subject VARCHAR(255),
+        experience INT
     )
-    ''')
+    """)
+
+    # COURSES TABLE
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS courses (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        course_name VARCHAR(255),
+        duration VARCHAR(100),
+        fees DECIMAL(10,2)
+    )
+    """)
+
+    # FEES TABLE
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS fees (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT,
+        amount DECIMAL(10,2),
+        payment_status VARCHAR(50)
+    )
+    """)
+
+    # ATTENDANCE TABLE
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS attendance (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT,
+        attendance_date DATE,
+        status VARCHAR(50)
+    )
+    """)
+
+    # REPORT CARDS TABLE
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS report_cards (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT,
+        subject VARCHAR(255),
+        marks INT,
+        grade VARCHAR(10)
+    )
+    """)
 
     conn.commit()
 
-# =========================================================
-# USER FUNCTIONS
-# =========================================================
+    c.close()
+    conn.close()
+
+
+# =========================================
+# ADD USER
+# =========================================
 def add_user(username, password, role):
 
-    c.execute(
-        "SELECT * FROM users WHERE username=?",
-        (username,)
-    )
+    conn = get_connection()
+    c = conn.cursor()
 
-    existing_user = c.fetchone()
+    query = """
+    INSERT INTO users (username, password, role)
+    VALUES (%s, %s, %s)
+    """
 
-    if existing_user:
-        return False
+    values = (username, password, role)
 
-    c.execute(
-        '''
-        INSERT INTO users(username, password, role)
-        VALUES (?, ?, ?)
-        ''',
-        (username, password, role)
-    )
+    c.execute(query, values)
 
     conn.commit()
 
-    return True
+    c.close()
+    conn.close()
 
 
+# =========================================
+# LOGIN USER
+# =========================================
 def login_user(username, password):
 
-    c.execute(
-        '''
-        SELECT * FROM users
-        WHERE username=? AND password=?
-        ''',
-        (username, password)
-    )
+    conn = get_connection()
+    c = conn.cursor()
 
-    return c.fetchone()
+    query = """
+    SELECT * FROM users
+    WHERE username=%s AND password=%s
+    """
 
-# =========================================================
-# STUDENT FUNCTIONS
-# =========================================================
-def add_student_bulk(df):
+    c.execute(query, (username, password))
 
-    print("Excel Columns:", df.columns)
+    data = c.fetchone()
 
-    for _, row in df.iterrows():
+    c.close()
+    conn.close()
 
-        student_name = str(row.iloc[0])
+    return data
 
-        c.execute(
-            '''
-            INSERT INTO students(name, class, age)
-            VALUES (?, ?, ?)
-            ''',
-            (
-                student_name,
-                "Default",
-                18
-            )
-        )
+
+# =========================================
+# ADD STUDENT
+# =========================================
+def add_student(name, email, phone, course):
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    query = """
+    INSERT INTO students
+    (student_name, student_email, student_phone, course)
+    VALUES (%s, %s, %s, %s)
+    """
+
+    values = (name, email, phone, course)
+
+    c.execute(query, values)
 
     conn.commit()
 
+    c.close()
+    conn.close()
 
+
+# =========================================
+# VIEW STUDENTS
+# =========================================
 def view_students():
 
-    c.execute(
-        "SELECT * FROM students"
-    )
+    conn = get_connection()
+    c = conn.cursor()
 
-    return c.fetchall()
+    c.execute("SELECT * FROM students")
 
-# =========================================================
-# ATTENDANCE FUNCTIONS
-# =========================================================
-def add_attendance(student_id, date, status):
+    data = c.fetchall()
 
-    c.execute(
-        '''
-        INSERT INTO attendance(student_id, date, status)
-        VALUES (?, ?, ?)
-        ''',
-        (
-            student_id,
-            date,
-            status
-        )
-    )
+    c.close()
+    conn.close()
 
-    conn.commit()
+    return data
 
 
-def view_attendance():
+# =========================================
+# ADD TEACHER
+# =========================================
+def add_teacher(name, email, subject, experience):
 
-    c.execute('''
-    SELECT students.name, attendance.date, attendance.status
-    FROM attendance
-    JOIN students
-    ON students.id = attendance.student_id
-    ''')
+    conn = get_connection()
+    c = conn.cursor()
 
-    return c.fetchall()
+    query = """
+    INSERT INTO teachers
+    (teacher_name, teacher_email, subject, experience)
+    VALUES (%s, %s, %s, %s)
+    """
 
-# =========================================================
-# MARKS FUNCTIONS
-# =========================================================
-def add_marks(student_id, subject, marks):
+    values = (name, email, subject, experience)
 
-    c.execute(
-        '''
-        INSERT INTO marks(student_id, subject, marks)
-        VALUES (?, ?, ?)
-        ''',
-        (
-            student_id,
-            subject,
-            marks
-        )
-    )
+    c.execute(query, values)
 
     conn.commit()
 
-
-def view_marks():
-
-    c.execute('''
-    SELECT students.name, marks.subject, marks.marks
-    FROM marks
-    JOIN students
-    ON students.id = marks.student_id
-    ''')
-
-    return c.fetchall()
-
-# =========================================================
-# REPORT CARD FUNCTIONS
-# =========================================================
-def get_student_report(student_id):
-
-    c.execute(
-        '''
-        SELECT COUNT(*)
-        FROM attendance
-        WHERE student_id=?
-        ''',
-        (student_id,)
-    )
-
-    total = c.fetchone()[0]
-
-    c.execute(
-        '''
-        SELECT COUNT(*)
-        FROM attendance
-        WHERE student_id=? AND status='Present'
-        ''',
-        (student_id,)
-    )
-
-    present = c.fetchone()[0]
-
-    attendance_pct = (
-        (present / total) * 100
-        if total > 0 else 0
-    )
-
-    c.execute(
-        '''
-        SELECT AVG(marks)
-        FROM marks
-        WHERE student_id=?
-        ''',
-        (student_id,)
-    )
-
-    avg_marks = c.fetchone()[0]
-
-    if avg_marks is None:
-        avg_marks = 0
-
-    c.execute(
-        '''
-        SELECT subject, marks
-        FROM marks
-        WHERE student_id=?
-        ''',
-        (student_id,)
-    )
-
-    marks_data = c.fetchall()
-
-    return (
-        attendance_pct,
-        avg_marks,
-        marks_data
-    )
-
-# =========================================================
-# TEACHER FUNCTIONS
-# =========================================================
-def add_teacher(
-    teacher_id,
-    teacher_name,
-    age,
-    gender,
-    expertise,
-    experience,
-    rating
-):
-
-    c.execute(
-        '''
-        INSERT INTO teachers(
-            TeacherID,
-            TeacherName,
-            Age,
-            Gender,
-            Expertise,
-            YearsOfExperience,
-            TeacherRating
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''',
-        (
-            teacher_id,
-            teacher_name,
-            age,
-            gender,
-            expertise,
-            experience,
-            rating
-        )
-    )
-
-    conn.commit()
+    c.close()
+    conn.close()
 
 
-def import_teachers_from_excel(df):
-
-    for _, row in df.iterrows():
-
-        c.execute(
-            '''
-            INSERT INTO teachers(
-                TeacherID,
-                TeacherName,
-                Age,
-                Gender,
-                Expertise,
-                YearsOfExperience,
-                TeacherRating
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''',
-            (
-                row["TeacherID"],
-                row["TeacherName"],
-                row["Age"],
-                row["Gender"],
-                row["Expertise"],
-                row["YearsOfExperience"],
-                row["TeacherRating"]
-            )
-        )
-
-    conn.commit()
-
-
+# =========================================
+# VIEW TEACHERS
+# =========================================
 def view_teachers():
 
-    c.execute(
-        "SELECT * FROM teachers"
-    )
+    conn = get_connection()
+    c = conn.cursor()
 
-    return c.fetchall()
+    c.execute("SELECT * FROM teachers")
+
+    data = c.fetchall()
+
+    c.close()
+    conn.close()
+
+    return data
+
+
+# =========================================
+# ADD COURSE
+# =========================================
+def add_course(course_name, duration, fees):
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    query = """
+    INSERT INTO courses
+    (course_name, duration, fees)
+    VALUES (%s, %s, %s)
+    """
+
+    values = (course_name, duration, fees)
+
+    c.execute(query, values)
+
+    conn.commit()
+
+    c.close()
+    conn.close()
+
+
+# =========================================
+# VIEW COURSES
+# =========================================
+def view_courses():
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute("SELECT * FROM courses")
+
+    data = c.fetchall()
+
+    c.close()
+    conn.close()
+
+    return data
+
+
+# =========================================
+# ADD FEES
+# =========================================
+def add_fees(student_id, amount, payment_status):
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    query = """
+    INSERT INTO fees
+    (student_id, amount, payment_status)
+    VALUES (%s, %s, %s)
+    """
+
+    values = (student_id, amount, payment_status)
+
+    c.execute(query, values)
+
+    conn.commit()
+
+    c.close()
+    conn.close()
+
+
+# =========================================
+# VIEW FEES
+# =========================================
+def view_fees():
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute("SELECT * FROM fees")
+
+    data = c.fetchall()
+
+    c.close()
+    conn.close()
+
+    return data
+
+
+# =========================================
+# ADD ATTENDANCE
+# =========================================
+def add_attendance(student_id, attendance_date, status):
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    query = """
+    INSERT INTO attendance
+    (student_id, attendance_date, status)
+    VALUES (%s, %s, %s)
+    """
+
+    values = (student_id, attendance_date, status)
+
+    c.execute(query, values)
+
+    conn.commit()
+
+    c.close()
+    conn.close()
+
+
+# =========================================
+# VIEW ATTENDANCE
+# =========================================
+def view_attendance():
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute("SELECT * FROM attendance")
+
+    data = c.fetchall()
+
+    c.close()
+    conn.close()
+
+    return data
+
+
+# =========================================
+# ADD MARKS
+# =========================================
+def add_marks(student_id, subject, marks, grade):
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    query = """
+    INSERT INTO report_cards
+    (student_id, subject, marks, grade)
+    VALUES (%s, %s, %s, %s)
+    """
+
+    values = (student_id, subject, marks, grade)
+
+    c.execute(query, values)
+
+    conn.commit()
+
+    c.close()
+    conn.close()
+
+
+# =========================================
+# VIEW MARKS
+# =========================================
+def view_marks():
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    c.execute("SELECT * FROM report_cards")
+
+    data = c.fetchall()
+
+    c.close()
+    conn.close()
+
+    return data
+
+
+# =========================================
+# GET STUDENT REPORT
+# =========================================
+def get_student_report(student_id):
+
+    conn = get_connection()
+    c = conn.cursor()
+
+    query = """
+    SELECT * FROM report_cards
+    WHERE student_id=%s
+    """
+
+    c.execute(query, (student_id,))
+
+    data = c.fetchall()
+
+    c.close()
+    conn.close()
+
+    return data
