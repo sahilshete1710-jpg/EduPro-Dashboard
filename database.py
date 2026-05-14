@@ -1,4 +1,6 @@
-import mysql.connector
+# database.py
+
+import sqlite3
 
 
 # =========================================
@@ -6,13 +8,9 @@ import mysql.connector
 # =========================================
 def get_connection():
 
-    conn = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="root123",  
-        database="edupro",
-        auth_plugin="mysql_native_password",
-        ssl_disabled=True
+    conn = sqlite3.connect(
+        "edupro.db",
+        check_same_thread=False
     )
 
     return conn
@@ -24,85 +22,87 @@ def get_connection():
 def create_tables():
 
     conn = get_connection()
+
     c = conn.cursor()
 
     # USERS TABLE
     c.execute("""
     CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        username VARCHAR(255),
-        password VARCHAR(255),
-        role VARCHAR(50)
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        password TEXT,
+        role TEXT
     )
     """)
 
     # STUDENTS TABLE
     c.execute("""
     CREATE TABLE IF NOT EXISTS students (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        student_name VARCHAR(255),
-        student_email VARCHAR(255),
-        student_phone VARCHAR(20),
-        course VARCHAR(255),
-        attendance INT DEFAULT 0
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_name TEXT,
+        student_email TEXT,
+        student_phone TEXT,
+        course TEXT,
+        attendance INTEGER DEFAULT 0
     )
     """)
 
     # TEACHERS TABLE
     c.execute("""
     CREATE TABLE IF NOT EXISTS teachers (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        teacher_name VARCHAR(255),
-        teacher_email VARCHAR(255),
-        subject VARCHAR(255),
-        experience INT
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        teacher_name TEXT,
+        teacher_email TEXT,
+        subject TEXT,
+        experience INTEGER
     )
     """)
 
     # COURSES TABLE
     c.execute("""
     CREATE TABLE IF NOT EXISTS courses (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        course_name VARCHAR(255),
-        duration VARCHAR(100),
-        fees DECIMAL(10,2)
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        course_name TEXT,
+        duration TEXT,
+        fees REAL
     )
     """)
 
     # FEES TABLE
     c.execute("""
     CREATE TABLE IF NOT EXISTS fees (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        student_id INT,
-        amount DECIMAL(10,2),
-        payment_status VARCHAR(50)
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER,
+        amount REAL,
+        payment_status TEXT
     )
     """)
 
     # ATTENDANCE TABLE
     c.execute("""
     CREATE TABLE IF NOT EXISTS attendance (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        student_id INT,
-        attendance_date DATE,
-        status VARCHAR(50)
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER,
+        attendance_date TEXT,
+        status TEXT
     )
     """)
 
     # REPORT CARDS TABLE
     c.execute("""
     CREATE TABLE IF NOT EXISTS report_cards (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        student_id INT,
-        subject VARCHAR(255),
-        marks INT,
-        grade VARCHAR(10)
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id INTEGER,
+        subject TEXT,
+        marks INTEGER,
+        grade TEXT
     )
     """)
 
     conn.commit()
 
     c.close()
+
     conn.close()
 
 
@@ -112,21 +112,23 @@ def create_tables():
 def add_user(username, password, role):
 
     conn = get_connection()
+
     c = conn.cursor()
 
     query = """
     INSERT INTO users (username, password, role)
-    VALUES (%s, %s, %s)
+    VALUES (?, ?, ?)
     """
 
-    values = (username, password, role)
-
-    c.execute(query, values)
+    c.execute(query, (username, password, role))
 
     conn.commit()
 
     c.close()
+
     conn.close()
+
+    return True
 
 
 # =========================================
@@ -135,11 +137,12 @@ def add_user(username, password, role):
 def login_user(username, password):
 
     conn = get_connection()
+
     c = conn.cursor()
 
     query = """
     SELECT * FROM users
-    WHERE username=%s AND password=%s
+    WHERE username=? AND password=?
     """
 
     c.execute(query, (username, password))
@@ -147,6 +150,7 @@ def login_user(username, password):
     data = c.fetchone()
 
     c.close()
+
     conn.close()
 
     return data
@@ -158,21 +162,21 @@ def login_user(username, password):
 def add_student(name, email, phone, course):
 
     conn = get_connection()
+
     c = conn.cursor()
 
     query = """
     INSERT INTO students
     (student_name, student_email, student_phone, course)
-    VALUES (%s, %s, %s, %s)
+    VALUES (?, ?, ?, ?)
     """
 
-    values = (name, email, phone, course)
-
-    c.execute(query, values)
+    c.execute(query, (name, email, phone, course))
 
     conn.commit()
 
     c.close()
+
     conn.close()
 
 
@@ -182,6 +186,7 @@ def add_student(name, email, phone, course):
 def view_students():
 
     conn = get_connection()
+
     c = conn.cursor()
 
     c.execute("SELECT * FROM students")
@@ -189,6 +194,7 @@ def view_students():
     data = c.fetchall()
 
     c.close()
+
     conn.close()
 
     return data
@@ -200,21 +206,21 @@ def view_students():
 def add_teacher(name, email, subject, experience):
 
     conn = get_connection()
+
     c = conn.cursor()
 
     query = """
     INSERT INTO teachers
     (teacher_name, teacher_email, subject, experience)
-    VALUES (%s, %s, %s, %s)
+    VALUES (?, ?, ?, ?)
     """
 
-    values = (name, email, subject, experience)
-
-    c.execute(query, values)
+    c.execute(query, (name, email, subject, experience))
 
     conn.commit()
 
     c.close()
+
     conn.close()
 
 
@@ -224,6 +230,7 @@ def add_teacher(name, email, subject, experience):
 def view_teachers():
 
     conn = get_connection()
+
     c = conn.cursor()
 
     c.execute("SELECT * FROM teachers")
@@ -231,117 +238,10 @@ def view_teachers():
     data = c.fetchall()
 
     c.close()
+
     conn.close()
 
     return data
-
-
-# =========================================
-# ADD COURSE
-# =========================================
-def add_course(course_name, duration, fees):
-
-    conn = get_connection()
-    c = conn.cursor()
-
-    query = """
-    INSERT INTO courses
-    (course_name, duration, fees)
-    VALUES (%s, %s, %s)
-    """
-
-    values = (course_name, duration, fees)
-
-    c.execute(query, values)
-
-    conn.commit()
-
-    c.close()
-    conn.close()
-
-
-# =========================================
-# VIEW COURSES
-# =========================================
-def view_courses():
-
-    conn = get_connection()
-    c = conn.cursor()
-
-    c.execute("SELECT * FROM courses")
-
-    data = c.fetchall()
-
-    c.close()
-    conn.close()
-
-    return data
-
-
-# =========================================
-# ADD FEES
-# =========================================
-def add_fees(student_id, amount, payment_status):
-
-    conn = get_connection()
-    c = conn.cursor()
-
-    query = """
-    INSERT INTO fees
-    (student_id, amount, payment_status)
-    VALUES (%s, %s, %s)
-    """
-
-    values = (student_id, amount, payment_status)
-
-    c.execute(query, values)
-
-    conn.commit()
-
-    c.close()
-    conn.close()
-
-
-# =========================================
-# VIEW FEES
-# =========================================
-def view_fees():
-
-    conn = get_connection()
-    c = conn.cursor()
-
-    c.execute("SELECT * FROM fees")
-
-    data = c.fetchall()
-
-    c.close()
-    conn.close()
-
-    return data
-
-
-# =========================================
-# ADD ATTENDANCE
-# =========================================
-def add_attendance(student_id, attendance_date, status):
-
-    conn = get_connection()
-    c = conn.cursor()
-
-    query = """
-    INSERT INTO attendance
-    (student_id, attendance_date, status)
-    VALUES (%s, %s, %s)
-    """
-
-    values = (student_id, attendance_date, status)
-
-    c.execute(query, values)
-
-    conn.commit()
-
-    c.close()
-    conn.close()
 
 
 # =========================================
@@ -350,6 +250,7 @@ def add_attendance(student_id, attendance_date, status):
 def view_attendance():
 
     conn = get_connection()
+
     c = conn.cursor()
 
     c.execute("SELECT * FROM attendance")
@@ -357,33 +258,10 @@ def view_attendance():
     data = c.fetchall()
 
     c.close()
+
     conn.close()
 
     return data
-
-
-# =========================================
-# ADD MARKS
-# =========================================
-def add_marks(student_id, subject, marks, grade):
-
-    conn = get_connection()
-    c = conn.cursor()
-
-    query = """
-    INSERT INTO report_cards
-    (student_id, subject, marks, grade)
-    VALUES (%s, %s, %s, %s)
-    """
-
-    values = (student_id, subject, marks, grade)
-
-    c.execute(query, values)
-
-    conn.commit()
-
-    c.close()
-    conn.close()
 
 
 # =========================================
@@ -392,6 +270,7 @@ def add_marks(student_id, subject, marks, grade):
 def view_marks():
 
     conn = get_connection()
+
     c = conn.cursor()
 
     c.execute("SELECT * FROM report_cards")
@@ -399,6 +278,7 @@ def view_marks():
     data = c.fetchall()
 
     c.close()
+
     conn.close()
 
     return data
@@ -410,11 +290,12 @@ def view_marks():
 def get_student_report(student_id):
 
     conn = get_connection()
+
     c = conn.cursor()
 
     query = """
     SELECT * FROM report_cards
-    WHERE student_id=%s
+    WHERE student_id=?
     """
 
     c.execute(query, (student_id,))
@@ -422,6 +303,7 @@ def get_student_report(student_id):
     data = c.fetchall()
 
     c.close()
+
     conn.close()
 
     return data
