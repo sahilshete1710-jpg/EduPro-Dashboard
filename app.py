@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import os
 from database import *
 
 # =========================================================
@@ -28,20 +27,18 @@ st.markdown("""
         #020617,
         #0f172a,
         #1e3a8a,
+        #312e81,
         #4c1d95,
         #0f766e,
         #1d4ed8
     );
 
     background-size: 600% 600%;
-
-    animation: gradientAnimation 18s ease infinite;
-
+    animation: gradientBG 18s ease infinite;
     color: white;
 }
 
-@keyframes gradientAnimation {
-
+@keyframes gradientBG {
     0% {
         background-position: 0% 50%;
     }
@@ -55,56 +52,8 @@ st.markdown("""
     }
 }
 
-.stApp::before {
-
-    content: '';
-
-    position: fixed;
-
-    width: 600px;
-
-    height: 600px;
-
-    background: rgba(59,130,246,0.25);
-
-    border-radius: 50%;
-
-    top: -200px;
-
-    left: -150px;
-
-    filter: blur(120px);
-
-    z-index: -1;
-}
-
-.stApp::after {
-
-    content: '';
-
-    position: fixed;
-
-    width: 500px;
-
-    height: 500px;
-
-    background: rgba(168,85,247,0.22);
-
-    border-radius: 50%;
-
-    bottom: -150px;
-
-    right: -120px;
-
-    filter: blur(120px);
-
-    z-index: -1;
-}
-
 section[data-testid="stSidebar"] {
-
-    background: rgba(15,23,42,0.88);
-
+    background: rgba(15,23,42,0.85);
     backdrop-filter: blur(20px);
 }
 
@@ -117,90 +66,41 @@ h1, h2, h3, h4 {
 }
 
 [data-testid="metric-container"] {
-
     background: rgba(255,255,255,0.08);
-
-    border-radius: 22px;
-
-    padding: 22px;
-
+    border-radius: 20px;
+    padding: 20px;
     border: 1px solid rgba(255,255,255,0.1);
-
-    backdrop-filter: blur(16px);
-
-    box-shadow: 0px 10px 35px rgba(0,0,0,0.35);
-
-    transition: 0.3s;
-}
-
-[data-testid="metric-container"]:hover {
-
-    transform: translateY(-8px);
+    backdrop-filter: blur(15px);
 }
 
 .stButton > button {
-
     width: 100%;
-
     height: 50px;
-
-    border-radius: 15px;
-
+    border-radius: 14px;
     border: none;
-
+    color: white;
+    font-weight: bold;
     background: linear-gradient(
         90deg,
         #2563eb,
         #7c3aed,
         #06b6d4
     );
-
-    color: white;
-
-    font-size: 16px;
-
-    font-weight: bold;
-}
-
-.stButton > button:hover {
-
-    transform: scale(1.03);
-
-    transition: 0.3s;
-}
-
-[data-testid="stDataFrame"] {
-
-    background: rgba(255,255,255,0.06);
-
-    border-radius: 20px;
-
-    padding: 10px;
 }
 
 .hero {
-
     background: rgba(255,255,255,0.08);
-
     padding: 40px;
-
-    border-radius: 30px;
-
+    border-radius: 25px;
     text-align: center;
-
     backdrop-filter: blur(18px);
-
     margin-bottom: 30px;
 }
 
 .footer {
-
     text-align: center;
-
     color: white;
-
     opacity: 0.8;
-
     margin-top: 40px;
 }
 
@@ -208,526 +108,181 @@ h1, h2, h3, h4 {
 """, unsafe_allow_html=True)
 
 # =========================================================
-# DATABASE
+# CREATE TABLES
 # =========================================================
 
 create_tables()
 
 # =========================================================
-# DEFAULT USERS
+# SIDEBAR
 # =========================================================
 
-try:
-    add_user("admin", "admin123", "Admin")
-except:
-    pass
-
-try:
-    add_user("teacher", "teacher123", "Teacher")
-except:
-    pass
-
-try:
-    add_user("student", "student123", "Student")
-except:
-    pass
-
-# =========================================================
-# SESSION STATE
-# =========================================================
-
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
-# =========================================================
-# LOGIN MENU
-# =========================================================
-
-menu = ["Login", "Signup"]
-
-choice = st.sidebar.selectbox(
-    "Menu",
-    menu
-)
-
-# =========================================================
-# LOGIN SYSTEM
-# =========================================================
-
-if not st.session_state.logged_in:
-
-    if choice == "Login":
-
-        st.markdown("""
-        <div class='hero'>
-
-        <h1>🎓 EduPro Smart ERP</h1>
-
-        <h3>Premium School & College Management System</h3>
-
-        </div>
-        """, unsafe_allow_html=True)
-
-        user = st.text_input("Username")
-
-        pwd = st.text_input(
-            "Password",
-            type="password"
-        )
-
-        if st.button("Login"):
-
-            result = login_user(user, pwd)
-
-            if result:
-
-                st.session_state.logged_in = True
-                st.session_state.user = result[0]
-                st.session_state.role = result[2]
-
-                st.success("Login Successful")
-
-                st.rerun()
-
-            else:
-
-                st.error("Invalid Credentials")
-
-    elif choice == "Signup":
-
-        st.title("📝 Create Account")
-
-        user = st.text_input("Username")
-
-        pwd = st.text_input(
-            "Password",
-            type="password"
-        )
-
-        role = st.selectbox(
-            "Role",
-            ["Student", "Teacher", "Admin"]
-        )
-
-        if st.button("Create Account"):
-
-            result = add_user(
-                user,
-                pwd,
-                role
-            )
-
-            if result:
-                st.success("Account Created")
-            else:
-                st.warning("Username already exists")
-
-# =========================================================
-# MAIN SYSTEM
-# =========================================================
-
-else:
-
-    st.sidebar.markdown("""
+st.sidebar.markdown(
+    """
     <center>
 
-    <img src='https://cdn-icons-png.flaticon.com/512/3135/3135755.png'
-    width='130'>
+    <img src='https://cdn-icons-png.flaticon.com/512/3135/3135755.png' width='120'>
 
     <h2>EduPro ERP</h2>
 
-    <p>Smart Education Portal</p>
+    <p>Premium AI Education Platform</p>
 
     </center>
-    """, unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
 
-    st.sidebar.write(
-        f"👤 User: {st.session_state.user}"
-    )
+menu = st.sidebar.radio(
+    "Navigation",
+    [
+        "Dashboard",
+        "Students",
+        "Teachers",
+        "Courses",
+        "Attendance",
+        "Marks",
+        "Transactions",
+        "Report Card"
+    ]
+)
 
-    st.sidebar.write(
-        f"🛡 Role: {st.session_state.role}"
-    )
+# =========================================================
+# DASHBOARD
+# =========================================================
 
-    # =====================================================
-    # ROLE BASED ACCESS
-    # =====================================================
+if menu == "Dashboard":
 
-    if st.session_state.role == "Admin":
-
-        modules = [
-            "Dashboard",
-            "Teachers",
-            "Students",
-            "Courses",
-            "Transactions",
-            "Analytics",
-            "Attendance",
-            "Marks",
-            "Report Card"
-        ]
-
-    elif st.session_state.role == "Teacher":
-
-        modules = [
-            "Dashboard",
-            "Teachers",
-            "Students",
-            "Courses",
-            "Transactions",
-            "Analytics",
-            "Attendance",
-            "Marks",
-            "Report Card"
-        ]
-
-    elif st.session_state.role == "Student":
-
-        modules = [
-            "Dashboard",
-            "Students",
-            "Transactions",
-            "Analytics",
-            "Attendance",
-            "Courses",
-            "Report Card"
-        ]
-
-    else:
-
-        modules = ["Dashboard"]
-
-    module = st.sidebar.radio(
-        "Navigation",
-        modules
-    )
-
-    if st.sidebar.button("Logout"):
-
-        st.session_state.logged_in = False
-        st.rerun()
-
-    # =====================================================
-    # LOAD DATASET
-    # =====================================================
-
-    if os.path.exists("final_dataset.csv"):
-
-        df = pd.read_csv("final_dataset.csv")
-
-    else:
-
-        st.error("final_dataset.csv not found")
-        st.stop()
-
-    # =====================================================
-    # DASHBOARD
-    # =====================================================
-
-    if module == "Dashboard":
-
-        st.markdown("""
+    st.markdown(
+        """
         <div class='hero'>
 
-        <h1>🎓 EduPro Smart ERP Dashboard</h1>
+        <h1>🚀 EduPro Smart ERP</h1>
 
-        <h3>
-        AI Powered Education Analytics Platform
-        </h3>
+        <h3>Premium AI Powered Education Platform</h3>
 
         </div>
-        """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True
+    )
 
-        col1, col2, col3, col4 = st.columns(4)
+    students = view_students()
+    teachers = view_teachers()
+    courses = view_courses()
+    fees = view_fees()
 
-        with col1:
-            st.metric(
-                "👨‍🎓 Students",
-                len(view_students())
-            )
+    col1, col2, col3, col4 = st.columns(4)
 
-        with col2:
-            st.metric(
-                "👨‍🏫 Teachers",
-                df["TeacherID"].nunique()
-            )
+    with col1:
+        st.metric("🎓 Students", len(students))
 
-        with col3:
-            st.metric(
-                "📚 Courses",
-                df["CourseID"].nunique()
-            )
+    with col2:
+        st.metric("👨‍🏫 Teachers", len(teachers))
 
-        with col4:
-            st.metric(
-                "💳 Transactions",
-                len(df)
-            )
+    with col3:
+        st.metric("📚 Courses", len(courses))
 
-    # =====================================================
-    # TEACHERS
-    # =====================================================
+    with col4:
+        st.metric("💳 Transactions", len(fees))
 
-    elif module == "Teachers":
+# =========================================================
+# STUDENTS
+# =========================================================
 
-        if st.session_state.role == "Student":
+elif menu == "Students":
 
-            st.error("Access Denied")
-            st.stop()
+    st.title("🎓 Students")
 
-        st.title("👨‍🏫 Teachers")
+    students = view_students()
 
-        teacher_data = view_teachers()
+    if students:
 
-        teacher_df = pd.DataFrame(
-            teacher_data,
-            columns=[
-                "TeacherID",
-                "TeacherName",
-                "Age",
-                "Gender",
-                "Expertise",
-                "YearsOfExperience",
-                "TeacherRating"
-            ]
-        )
-
-        st.dataframe(
-            teacher_df,
-            use_container_width=True
-        )
-
-    # =====================================================
-    # STUDENTS
-    # =====================================================
-
-    elif module == "Students":
-
-        st.title("👨‍🎓 Students")
-
-        student_data = view_students()
-
-        student_df = pd.DataFrame(
-            student_data,
-            columns=[
-                "ID",
-                "Name",
-                "Class",
-                "Age"
-            ]
-        )
-
-        st.dataframe(
-            student_df,
-            use_container_width=True
-        )
-
-    # =====================================================
-    # COURSES
-    # =====================================================
-
-    elif module == "Courses":
-
-        st.title("📚 Courses")
-
-        courses_df = pd.read_excel(
-            "edupro.xlsx",
-            sheet_name="Courses"
-        )
-
-        st.dataframe(
-            courses_df,
-            use_container_width=True
-        )
-
-        fig = px.bar(
-            courses_df,
-            x="CourseCategory",
-            y="CourseRating",
-            color="CourseLevel",
-            template="plotly_dark"
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-
-    # =====================================================
-    # TRANSACTIONS
-    # =====================================================
-
-    elif module == "Transactions":
-
-        st.title("💳 Transactions")
-
-        transactions_df = pd.read_excel(
-            "edupro.xlsx",
-            sheet_name="Transactions"
-        )
-
-        st.dataframe(
-            transactions_df,
-            use_container_width=True
-        )
-
-    # =====================================================
-    # ANALYTICS
-    # =====================================================
-
-    elif module == "Analytics":
-
-        st.title("📊 Analytics Dashboard")
-
-        fig = px.scatter(
-            df,
-            x="YearsOfExperience",
-            y="TeacherRating",
-            color="Expertise",
-            size="CourseRating",
-            hover_data=[
-                "TeacherName",
-                "CourseName"
-            ],
-            template="plotly_dark",
-            title="Instructor Experience vs Performance",
-            size_max=35
-        )
-
-        fig.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="white")
-        )
-
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
-
-    # =====================================================
-    # ATTENDANCE
-    # =====================================================
-
-    elif module == "Attendance":
-
-        st.title("📅 Attendance")
-
-        attendance_df = pd.DataFrame(
-            view_attendance(),
-            columns=[
-                "Student",
-                "Date",
-                "Status"
-            ]
-        )
-
-        st.dataframe(
-            attendance_df,
-            use_container_width=True
-        )
-
-    # =====================================================
-    # MARKS
-    # =====================================================
-
-    elif module == "Marks":
-
-        if st.session_state.role == "Student":
-
-            st.error("Access Denied")
-            st.stop()
-
-        st.title("📊 Marks")
-
-        marks_df = pd.DataFrame(
-            view_marks(),
-            columns=[
-                "Student",
-                "Subject",
-                "Marks"
-            ]
-        )
-
-        st.dataframe(
-            marks_df,
-            use_container_width=True
-        )
-
-    # =====================================================
-    # REPORT CARD
-    # =====================================================
-
-    elif module == "Report Card":
-
-        st.title("📄 Report Card")
-
-        students = view_students()
-
-        student_df = pd.DataFrame(
+        df = pd.DataFrame(
             students,
             columns=[
                 "ID",
-                "Name",
-                "Class",
-                "Age"
+                "Student Name",
+                "Email",
+                "Phone",
+                "Course",
+                "Attendance"
             ]
         )
 
-        if student_df.empty:
+        st.dataframe(df, use_container_width=True)
 
-            st.warning("No students available")
+    else:
+        st.warning("No Students Found")
 
-        else:
+# =========================================================
+# TEACHERS
+# =========================================================
 
-            name_to_id = dict(
-                zip(
-                    student_df["Name"],
-                    student_df["ID"]
-                )
-            )
+elif menu == "Teachers":
 
-            selected = st.selectbox(
-                "Select Student",
-                list(name_to_id.keys())
-            )
+    st.title("👨‍🏫 Teachers")
 
-            student_id = name_to_id[selected]
+    teachers = view_teachers()
 
-            attendance_pct, avg_marks, marks_data = get_student_report(
-                student_id
-            )
+    if teachers:
 
-            col1, col2 = st.columns(2)
+        df = pd.DataFrame(
+            teachers,
+            columns=[
+                "ID",
+                "Teacher Name",
+                "Teacher Email",
+                "Subject",
+                "Experience"
+            ]
+        )
 
-            with col1:
-                st.metric(
-                    "Attendance %",
-                    f"{attendance_pct:.2f}%"
-                )
+        st.dataframe(df, use_container_width=True)
 
-            with col2:
-                st.metric(
-                    "Average Marks",
-                    f"{avg_marks:.2f}"
-                )
+    else:
+        st.warning("No Teachers Found")
 
-    # =====================================================
-    # FOOTER
-    # =====================================================
+# =========================================================
+# COURSES
+# =========================================================
 
-    st.markdown("""
+elif menu == "Courses":
+
+    st.title("📚 Courses")
+
+    courses = view_courses()
+
+    if courses:
+
+        df = pd.DataFrame(
+            courses,
+            columns=[
+                "ID",
+                "Course Name",
+                "Duration",
+                "Fees"
+            ]
+        )
+
+        st.dataframe(df, use_container_width=True)
+
+    else:
+        st.warning("No Courses Found")
+
+# =========================================================
+# FOOTER
+# =========================================================
+
+st.markdown(
+    """
     <div class='footer'>
 
     <hr>
 
-    <h3>
-    🎓 EduPro Smart ERP System
-    </h3>
+    <h3>🎓 EduPro Smart ERP</h3>
 
-    <p>
-    Premium AI Powered Education Platform
-    </p>
+    <p>Premium AI Powered Education Management System</p>
 
     </div>
-    """, unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)

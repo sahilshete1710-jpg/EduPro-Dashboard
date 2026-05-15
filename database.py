@@ -1,7 +1,4 @@
-# database.py
-
 import sqlite3
-
 
 # =========================================
 # DATABASE CONNECTION
@@ -299,6 +296,46 @@ def get_student_report(student_id):
     """
 
     c.execute(query, (student_id,))
+
+    data = c.fetchall()
+
+    c.close()
+
+    conn.close()
+
+    return data
+
+# =========================================================
+# VIEW COURSES
+# =========================================================
+
+def view_courses():
+
+    conn = get_connection()
+
+    c = conn.cursor()
+
+    c.execute("SELECT * FROM courses")
+
+    data = c.fetchall()
+
+    c.close()
+
+    conn.close()
+
+    return data
+
+# =========================================================
+# VIEW FEES
+# =========================================================
+
+def view_fees():
+
+    conn = get_connection()
+
+    c = conn.cursor()
+
+    c.execute("SELECT * FROM fees")
 
     data = c.fetchall()
 
