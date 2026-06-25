@@ -727,8 +727,7 @@ else:
     # =====================================================
 
     elif module == "Analytics":
-
-    st.title("📊 Analytics Dashboard")
+        st.title("📊 Analytics Dashboard")
 
     teachers_df.columns = teachers_df.columns.str.strip()
     courses_df.columns = courses_df.columns.str.strip()
