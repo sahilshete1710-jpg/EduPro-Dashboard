@@ -1,4 +1,4 @@
-﻿import streamlit as st
+import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
@@ -453,21 +453,31 @@ if not st.session_state.logged_in:
 
         role = st.selectbox(
             "Select Role",
-            ["Student", "Teacher","Admin"]
+            ["Student", "Teacher", "Admin"]
         )
 
         if st.button("Create Account"):
 
-            st.session_state.users_db[new_user] = {
+            if new_user in st.session_state.users_db:
 
-                "password": new_password,
+                st.error("Username already exists, please choose another one")
 
-                "role": role
-            }
+            elif not new_user or not new_password:
 
-            st.success("Account Created Successfully")
+                st.error("Username and password cannot be empty")
 
-            st.info("Now login using your new account")
+            else:
+
+                st.session_state.users_db[new_user] = {
+
+                    "password": new_password,
+
+                    "role": role
+                }
+
+                st.success("Account Created Successfully")
+
+                st.info("Now login using your new account")
 
 # =========================================================
 # MAIN APP
@@ -593,6 +603,10 @@ else:
         sheet_name="Users"
     )
 
+    teachers_df.columns = teachers_df.columns.str.strip()
+    courses_df.columns = courses_df.columns.str.strip()
+    transactions_df.columns = transactions_df.columns.str.strip()
+
     # =====================================================
     # DASHBOARD
     # =====================================================
@@ -662,6 +676,7 @@ else:
     # =====================================================
 
     elif module == "Students":
+
         st.title("👨‍🎓 Students Dashboard")
 
         st.dataframe(
@@ -674,6 +689,7 @@ else:
     # =====================================================
 
     elif module == "Courses":
+
         st.title("📚 Courses Dashboard")
 
         st.dataframe(
@@ -699,6 +715,7 @@ else:
     # =====================================================
 
     elif module == "Transactions":
+
         st.title("💳 Transactions Dashboard")
 
         st.dataframe(
@@ -721,23 +738,26 @@ else:
 
     # =====================================================
     # ANALYTICS
-    # ====================================================
+    # =====================================================
+
     elif module == "Analytics":
-            st.title("📊 Analytics Dashboard")
 
-    teachers_df.columns = teachers_df.columns.str.strip()
-    courses_df.columns = courses_df.columns.str.strip()
-    transactions_df.columns = transactions_df.columns.str.strip()
+        st.title("📊 Analytics Dashboard")
 
-    if "TeacherID" in teachers_df.columns and "TeacherID" in transactions_df.columns:
-
-        merged_df = (
-            transactions_df
-            .merge(teachers_df, on="TeacherID", how="left")
-            .merge(courses_df, on="CourseID", how="left")
+        merged_df = transactions_df.merge(
+            teachers_df,
+            on="TeacherID",
+            how="left"
+        ).merge(
+            courses_df,
+            on="CourseID",
+            how="left"
         )
 
-        st.dataframe(merged_df, use_container_width=True)
+        st.dataframe(
+            merged_df,
+            use_container_width=True
+        )
 
         fig = px.scatter(
             merged_df,
@@ -745,18 +765,24 @@ else:
             y="TeacherRating",
             color="Expertise",
             size="CourseRating",
-            hover_data=["TeacherName", "CourseName"],
+            hover_data=[
+                "TeacherName",
+                "CourseName",
+                "Amount"
+            ],
             template="plotly_dark",
             title="Teacher Experience vs Course Rating"
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
-    else:
-        st.error("TeacherID column not found in Teachers or Transactions sheet.")
     # =====================================================
     # ATTENDANCE
     # =====================================================
+
     elif module == "Attendance":
         st.title("📅 Attendance Dashboard")
 
@@ -791,6 +817,7 @@ else:
     # =====================================================
 
     elif module == "Marks":
+
         st.title("📊 Marks Dashboard")
 
         marks_data = {
@@ -822,6 +849,7 @@ else:
     # =====================================================
 
     elif module == "Report Card":
+
         st.title("📄 Report Card")
 
         report_data = {
