@@ -721,53 +721,42 @@ else:
 
     # =====================================================
     # ANALYTICS
-    # =====================================================
-
+    # ====================================================
     elif module == "Analytics":
-        st.title("📊 Analytics Dashboard")
+            st.title("📊 Analytics Dashboard")
 
     teachers_df.columns = teachers_df.columns.str.strip()
     courses_df.columns = courses_df.columns.str.strip()
     transactions_df.columns = transactions_df.columns.str.strip()
 
-    merged_df = transactions_df.merge(
-        teachers_df,
-        on="TeacherID",
-        how="left"
-    ).merge(
-        courses_df,
-        on="CourseID",
-        how="left"
-    )
+    if "TeacherID" in teachers_df.columns and "TeacherID" in transactions_df.columns:
 
-    st.dataframe(
-        merged_df,
-        use_container_width=True
-    )
+        merged_df = (
+            transactions_df
+            .merge(teachers_df, on="TeacherID", how="left")
+            .merge(courses_df, on="CourseID", how="left")
+        )
 
-    fig = px.scatter(
-        merged_df,
-        x="YearsOfExperience",
-        y="TeacherRating",
-        color="Expertise",
-        size="CourseRating",
-        hover_data=[
-            "TeacherName",
-            "CourseName",
-            "Amount"
-        ],
-        template="plotly_dark",
-        title="Teacher Experience vs Course Rating"
-    )
+        st.dataframe(merged_df, use_container_width=True)
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
+        fig = px.scatter(
+            merged_df,
+            x="YearsOfExperience",
+            y="TeacherRating",
+            color="Expertise",
+            size="CourseRating",
+            hover_data=["TeacherName", "CourseName"],
+            template="plotly_dark",
+            title="Teacher Experience vs Course Rating"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    else:
+        st.error("TeacherID column not found in Teachers or Transactions sheet.")
     # =====================================================
     # ATTENDANCE
     # =====================================================
-
     elif module == "Attendance":
         st.title("📅 Attendance Dashboard")
 
