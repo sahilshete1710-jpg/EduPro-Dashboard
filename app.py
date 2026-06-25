@@ -662,7 +662,6 @@ else:
     # =====================================================
 
     elif module == "Students":
-
         st.title("👨‍🎓 Students Dashboard")
 
         st.dataframe(
@@ -675,7 +674,6 @@ else:
     # =====================================================
 
     elif module == "Courses":
-
         st.title("📚 Courses Dashboard")
 
         st.dataframe(
@@ -701,7 +699,6 @@ else:
     # =====================================================
 
     elif module == "Transactions":
-
         st.title("💳 Transactions Dashboard")
 
         st.dataframe(
@@ -772,7 +769,6 @@ else:
     # =====================================================
 
     elif module == "Attendance":
-
         st.title("📅 Attendance Dashboard")
 
         attendance_data = {
@@ -806,7 +802,6 @@ else:
     # =====================================================
 
     elif module == "Marks":
-
         st.title("📊 Marks Dashboard")
 
         marks_data = {
@@ -838,7 +833,6 @@ else:
     # =====================================================
 
     elif module == "Report Card":
-
         st.title("📄 Report Card")
 
         report_data = {
