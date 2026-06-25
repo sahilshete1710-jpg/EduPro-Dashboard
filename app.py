@@ -608,6 +608,35 @@ else:
     transactions_df.columns = transactions_df.columns.str.strip()
 
     # =====================================================
+    # NORMALIZE MERGE KEYS
+    # Excel sometimes stores the same ID column as numbers in
+    # one sheet and text in another (or as floats like "1.0").
+    # pandas.merge() raises a ValueError if the dtypes don't
+    # line up, so we force every ID column to a clean string
+    # before any merge happens.
+    # =====================================================
+
+    def normalize_id_column(series):
+        numeric = pd.to_numeric(series, errors="coerce")
+        if numeric.notna().all():
+            # Whole sheet is numeric-like (int or float) -> strip
+            # any trailing ".0" so 1 and 1.0 are treated as equal.
+            return numeric.astype("Int64").astype(str)
+        return series.astype(str).str.strip()
+
+    if "TeacherID" in teachers_df.columns:
+        teachers_df["TeacherID"] = normalize_id_column(teachers_df["TeacherID"])
+
+    if "TeacherID" in transactions_df.columns:
+        transactions_df["TeacherID"] = normalize_id_column(transactions_df["TeacherID"])
+
+    if "CourseID" in courses_df.columns:
+        courses_df["CourseID"] = normalize_id_column(courses_df["CourseID"])
+
+    if "CourseID" in transactions_df.columns:
+        transactions_df["CourseID"] = normalize_id_column(transactions_df["CourseID"])
+
+    # =====================================================
     # DASHBOARD
     # =====================================================
 
