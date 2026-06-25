@@ -728,33 +728,46 @@ else:
 
     elif module == "Analytics":
 
-        st.title("📊 Analytics Dashboard")
+    st.title("📊 Analytics Dashboard")
 
-        merged_df = pd.merge(
-            teachers_df,
-            courses_df,
-            on="TeacherID"
-        )
+    teachers_df.columns = teachers_df.columns.str.strip()
+    courses_df.columns = courses_df.columns.str.strip()
+    transactions_df.columns = transactions_df.columns.str.strip()
 
-        fig = px.scatter(
-            merged_df,
-            x="YearsOfExperience",
-            y="TeacherRating",
-            color="Expertise",
-            size="CourseRating",
-            hover_data=[
-                "TeacherName",
-                "CourseName"
-            ],
-            template="plotly_dark",
-            title="Teacher Experience vs Performance"
-        )
+    merged_df = transactions_df.merge(
+        teachers_df,
+        on="TeacherID",
+        how="left"
+    ).merge(
+        courses_df,
+        on="CourseID",
+        how="left"
+    )
 
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
+    st.dataframe(
+        merged_df,
+        use_container_width=True
+    )
 
+    fig = px.scatter(
+        merged_df,
+        x="YearsOfExperience",
+        y="TeacherRating",
+        color="Expertise",
+        size="CourseRating",
+        hover_data=[
+            "TeacherName",
+            "CourseName",
+            "Amount"
+        ],
+        template="plotly_dark",
+        title="Teacher Experience vs Course Rating"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True
+    )
     # =====================================================
     # ATTENDANCE
     # =====================================================
@@ -888,4 +901,3 @@ else:
 
     </div>
     """, unsafe_allow_html=True)
-
